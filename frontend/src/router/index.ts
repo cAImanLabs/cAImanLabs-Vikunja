@@ -405,6 +405,11 @@ const router = createRouter({
 			component: () => import('@/views/labels/ListLabels.vue'),
 		},
 		{
+			path: '/sprints',
+			name: 'sprints.index',
+			component: () => import('@/views/sprints/ListSprints.vue'),
+		},
+		{
 			path: '/labels/new',
 			name: 'labels.create',
 			component: () => import('@/views/labels/NewLabel.vue'),

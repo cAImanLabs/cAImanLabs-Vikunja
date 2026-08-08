@@ -44,6 +44,8 @@ func (p *ProjectViewKind) MarshalJSON() ([]byte, error) {
 		return []byte(`"table"`), nil
 	case ProjectViewKindKanban:
 		return []byte(`"kanban"`), nil
+	case ProjectViewKindSprint:
+		return []byte(`"sprint"`), nil
 	}
 
 	return []byte(`null`), nil
@@ -65,6 +67,8 @@ func (p *ProjectViewKind) UnmarshalJSON(bytes []byte) error {
 		*p = ProjectViewKindTable
 	case "kanban":
 		*p = ProjectViewKindKanban
+	case "sprint":
+		*p = ProjectViewKindSprint
 	default:
 		return fmt.Errorf("unknown project view kind: %s", value)
 	}
@@ -79,7 +83,7 @@ func (p *ProjectViewKind) UnmarshalJSON(bytes []byte) error {
 func (*ProjectViewKind) Schema(_ huma.Registry) *huma.Schema {
 	return &huma.Schema{
 		Type: "string",
-		Enum: []any{"list", "gantt", "table", "kanban"},
+		Enum: []any{"list", "gantt", "table", "kanban", "sprint"},
 	}
 }
 
@@ -92,6 +96,7 @@ const (
 	ProjectViewKindGantt
 	ProjectViewKindTable
 	ProjectViewKindKanban
+	ProjectViewKindSprint
 )
 
 type BucketConfigurationModeKind int
@@ -161,8 +166,8 @@ type ProjectView struct {
 	Title string `xorm:"varchar(255) not null" json:"title" valid:"required,runelength(1|250)" minLength:"1" maxLength:"250" doc:"The title of this view."`
 	// The project this view belongs to
 	ProjectID int64 `xorm:"not null index" json:"project_id" param:"project" readOnly:"true" doc:"The project this view belongs to. Taken from the URL path; ignored on write."`
-	// The kind of this view. Can be `list`, `gantt`, `table` or `kanban`.
-	ViewKind ProjectViewKind `xorm:"not null" json:"view_kind" swaggertype:"string" enums:"list,gantt,table,kanban" doc:"The kind of this view. One of list, gantt, table or kanban."`
+	// The kind of this view. Can be `list`, `gantt`, `table`, `kanban` or `sprint`.
+	ViewKind ProjectViewKind `xorm:"not null" json:"view_kind" swaggertype:"string" enums:"list,gantt,table,kanban,sprint" doc:"The kind of this view. One of list, gantt, table, kanban or sprint."`
 
 	// The filter query to match tasks by. Check out https://vikunja.io/docs/filters for a full explanation.
 	Filter *TaskCollection `xorm:"json null default null" query:"filter" json:"filter" doc:"The filter query used to match tasks shown in this view. See https://vikunja.io/docs/filters."`
@@ -805,17 +810,12 @@ func GetProjectViewByID(s *xorm.Session, id int64) (view *ProjectView, err error
 	return
 }
 
-func CreateDefaultViewsForProject(s *xorm.Session, project *Project, a web.Auth, createBacklogBucket bool, createDefaultListFilter bool) (err error) {
+func CreateDefaultViewsForProject(s *xorm.Session, project *Project, a web.Auth, createBacklogBucket bool) (err error) {
 	list := &ProjectView{
 		ProjectID: project.ID,
 		Title:     "List",
 		ViewKind:  ProjectViewKindList,
 		Position:  100,
-	}
-	if createDefaultListFilter {
-		list.Filter = &TaskCollection{
-			Filter: "done = false",
-		}
 	}
 	err = createProjectView(s, list, a, createBacklogBucket, true)
 	if err != nil {
@@ -861,6 +861,23 @@ func CreateDefaultViewsForProject(s *xorm.Session, project *Project, a web.Auth,
 		gantt,
 		table,
 		kanban,
+	}
+
+	// Saved filters are virtual projects (negative IDs) spanning tasks across
+	// real projects; a sprint view needs an actual project to own its sprints,
+	// so skip it there.
+	if project.ID > 0 {
+		sprints := &ProjectView{
+			ProjectID: project.ID,
+			Title:     "Sprints",
+			ViewKind:  ProjectViewKindSprint,
+			Position:  500,
+		}
+		err = createProjectView(s, sprints, a, createBacklogBucket, true)
+		if err != nil {
+			return
+		}
+		project.Views = append(project.Views, sprints)
 	}
 
 	return

@@ -18,10 +18,12 @@ import {
 	faBell,
 	faBolt,
 	faCalendar,
+	faChartLine,
 	faCheck,
 	faCheckDouble,
 	faChessKnight,
 	faChevronDown,
+	faChevronRight,
 	faCircleInfo,
 	faCloudDownloadAlt,
 	faCloudUploadAlt,
@@ -130,11 +132,13 @@ library.add(faBars)
 library.add(faBell)
 library.add(faBellSlash)
 library.add(faCalendar)
+library.add(faChartLine)
 library.add(faCalendarAlt)
 library.add(faCheck)
 library.add(faCheckDouble)
 library.add(faChessKnight)
 library.add(faChevronDown)
+library.add(faChevronRight)
 library.add(faCircleInfo)
 library.add(faCircleQuestion)
 library.add(faClock)

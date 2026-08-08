@@ -221,6 +221,32 @@ func TestTask_Update(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, IsErrTaskDoesNotExist(err))
 	})
+	t.Run("story points and sprint are persisted", func(t *testing.T) {
+		// updateSingleTask's colsToUpdate allowlist must include these two
+		// columns, or the write is silently dropped even though the request
+		// succeeds and echoes the submitted values back.
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
+
+		task := &Task{
+			ID:          1,
+			Title:       "test10000",
+			ProjectID:   1,
+			StoryPoints: 8,
+			SprintID:    1,
+		}
+		err := task.Update(s, u)
+		require.NoError(t, err)
+		err = s.Commit()
+		require.NoError(t, err)
+
+		db.AssertExists(t, "tasks", map[string]interface{}{
+			"id":           1,
+			"story_points": 8,
+			"sprint_id":    1,
+		}, false)
+	})
 	t.Run("default bucket when moving a task between projects", func(t *testing.T) {
 		db.LoadAndAssertFixtures(t)
 		s := db.NewSession()

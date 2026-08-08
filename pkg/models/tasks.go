@@ -106,6 +106,10 @@ type Task struct {
 	HexColor string `xorm:"varchar(6) null" json:"hex_color" valid:"runelength(0|7)" maxLength:"7" doc:"The task color as a hex string without the leading '#'."`
 	// Determines how far a task is left from being done
 	PercentDone float64 `xorm:"DOUBLE null" json:"percent_done" doc:"How far the task is from done, between 0 and 1."`
+	// Story Points for agile estimation (e.g. 1, 2, 3, 5, 8, 13, 21)
+	StoryPoints int `xorm:"int null 'story_points'" json:"story_points" doc:"Story points estimation for the task."`
+	// Sprint ID this task belongs to
+	SprintID int64 `xorm:"bigint INDEX null 'sprint_id'" json:"sprint_id" doc:"The id of the sprint this task belongs to."`
 
 	// The task identifier, based on the project identifier and the task's index
 	Identifier string `xorm:"-" json:"identifier" readOnly:"true" doc:"The textual task identifier, derived from the project identifier and the task index (e.g. \"PROJ-12\")."`
@@ -1295,6 +1299,8 @@ func (t *Task) updateSingleTask(s *xorm.Session, a web.Auth, fields []string) (e
 		"bucket_id",
 		"repeat_mode",
 		"cover_image_attachment_id",
+		"story_points",
+		"sprint_id",
 	}
 
 	// Validate fields if provided

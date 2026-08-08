@@ -76,6 +76,24 @@
 					:labels="task.labels"
 				/>
 
+				<span
+					v-if="task.storyPoints > 0"
+					v-tooltip="$t('task.attributes.storyPoints')"
+					class="story-points-label mis-1"
+				>
+					<Icon icon="bolt" />
+					{{ task.storyPoints }}
+				</span>
+
+				<span
+					v-if="task.sprintId > 0 && sprintTitle"
+					v-tooltip="$t('task.attributes.sprint')"
+					class="sprint-label mis-1"
+				>
+					<Icon icon="layer-group" />
+					{{ sprintTitle }}
+				</span>
+
 				<AssigneeList
 					v-if="task.assignees.length > 0"
 					:assignees="task.assignees"
@@ -225,6 +243,7 @@ import {success} from '@/message'
 import {useProjectStore} from '@/stores/projects'
 import {useBaseStore} from '@/stores/base'
 import {useTaskStore} from '@/stores/tasks'
+import {useSprintStore} from '@/stores/sprints'
 import AssigneeList from '@/components/tasks/partials/AssigneeList.vue'
 import {useIntervalFn} from '@vueuse/core'
 import {playPopSound} from '@/helpers/playPop'
@@ -280,9 +299,17 @@ watch(
 const baseStore = useBaseStore()
 const projectStore = useProjectStore()
 const taskStore = useTaskStore()
+const sprintStore = useSprintStore()
 
 const project = computed(() => projectStore.projects[task.value.projectId])
 const projectColor = computed(() => project.value ? project.value?.hexColor : '')
+
+const sprintTitle = computed(() => sprintStore.getSprintById(task.value.sprintId)?.title)
+watch(() => task.value.sprintId, sprintId => {
+	if (sprintId > 0) {
+		sprintStore.ensureProjectLoaded(task.value.projectId)
+	}
+}, {immediate: true})
 
 const showProjectSeparately = computed(() => !props.showProject && currentProject.value?.id !== task.value.projectId && project.value)
 
@@ -478,6 +505,17 @@ defineExpose({
 		color: var(--grey-400);
 		font-size: .9rem;
 		white-space: nowrap;
+	}
+
+	.story-points-label,
+	.sprint-label {
+		color: var(--grey-400);
+		font-size: .9rem;
+		white-space: nowrap;
+
+		.icon {
+			margin-inline-end: .25rem;
+		}
 	}
 
 	.avatar {

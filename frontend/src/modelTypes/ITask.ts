@@ -7,6 +7,7 @@ import type {IAttachment} from './IAttachment'
 import type {ISubscription} from './ISubscription'
 import type {IProject} from './IProject'
 import type {IBucket} from './IBucket'
+import type {ISprint} from './ISprint'
 
 import type {IRelationKind} from '@/types/IRelationKind'
 import type {IRepeatAfter} from '@/types/IRepeatAfter'
@@ -38,6 +39,8 @@ export interface ITask extends IAbstract {
 	parentTaskId: ITask['id']
 	hexColor: string
 	percentDone: number
+	storyPoints: number
+	sprintId: ISprint['id']
 	relatedTasks: Partial<Record<IRelationKind, ITask[]>>
 	attachments: IAttachment[]
 	coverImageAttachmentId: IAttachment['id'] | null

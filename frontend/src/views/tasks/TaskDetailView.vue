@@ -121,6 +121,49 @@
 							appear
 						>
 							<div
+								v-if="activeFields.storyPoints"
+								class="column"
+							>
+								<!-- Story Points -->
+								<div class="detail-title">
+									<Icon icon="bolt" />
+									{{ $t('task.attributes.storyPoints') }}
+								</div>
+								<StoryPointsSelect
+									:ref="e => setFieldRef('storyPoints', e)"
+									v-model="task.storyPoints"
+									:disabled="!canWrite"
+									@update:modelValue="saveTask()"
+								/>
+							</div>
+						</CustomTransition>
+						<CustomTransition
+							name="flash-background"
+							appear
+						>
+							<div
+								v-if="activeFields.sprint"
+								class="column"
+							>
+								<!-- Sprint -->
+								<div class="detail-title">
+									<Icon icon="layer-group" />
+									{{ $t('task.attributes.sprint') }}
+								</div>
+								<SprintSelect
+									:ref="e => setFieldRef('sprint', e)"
+									v-model="task.sprintId"
+									:project-id="task.projectId"
+									:disabled="!canWrite"
+									@update:modelValue="saveTask()"
+								/>
+							</div>
+						</CustomTransition>
+						<CustomTransition
+							name="flash-background"
+							appear
+						>
+							<div
 								v-if="activeFields.dueDate"
 								class="column"
 							>
@@ -505,7 +548,14 @@
 						>
 							{{ $t('task.detail.actions.color') }}
 						</XButton>
-						
+						<XButton
+							variant="secondary"
+							icon="bolt"
+							@click="setFieldActive('storyPoints')"
+						>
+							{{ $t('task.detail.actions.storyPoints') }}
+						</XButton>
+
 						<span class="action-heading">{{ $t('task.detail.management') }}</span>
 
 						<XButton
@@ -532,6 +582,13 @@
 							@click="setRelatedTasksActive()"
 						>
 							{{ $t('task.detail.actions.relatedTasks') }}
+						</XButton>
+						<XButton
+							variant="secondary"
+							icon="layer-group"
+							@click="setFieldActive('sprint')"
+						>
+							{{ $t('task.detail.actions.sprint') }}
 						</XButton>
 						<XButton
 							v-shortcut="'KeyM'"
@@ -685,6 +742,8 @@ import EditLabels from '@/components/tasks/partials/EditLabels.vue'
 import Heading from '@/components/tasks/partials/Heading.vue'
 import ProjectSearch from '@/components/tasks/partials/ProjectSearch.vue'
 import PercentDoneSelect from '@/components/tasks/partials/PercentDoneSelect.vue'
+import StoryPointsSelect from '@/components/tasks/partials/StoryPointsSelect.vue'
+import SprintSelect from '@/components/tasks/partials/SprintSelect.vue'
 import PrioritySelect from '@/components/tasks/partials/PrioritySelect.vue'
 import RelatedTasks from '@/components/tasks/partials/RelatedTasks.vue'
 import Reminders from '@/components/tasks/partials/Reminders.vue'
@@ -1004,6 +1063,8 @@ type FieldType =
 	| 'repeatAfter'
 	| 'startDate'
 	| 'timeTracking'
+	| 'storyPoints'
+	| 'sprint'
 
 const activeFields: { [type in FieldType]: boolean } = reactive({
 	assignees: false,
@@ -1020,6 +1081,8 @@ const activeFields: { [type in FieldType]: boolean } = reactive({
 	repeatAfter: false,
 	startDate: false,
 	timeTracking: false,
+	storyPoints: false,
+	sprint: false,
 })
 
 function setActiveFields() {
@@ -1040,6 +1103,8 @@ function setActiveFields() {
 	activeFields.reminders = task.value.reminders.length > 0
 	activeFields.repeatAfter = task.value.repeatAfter?.amount > 0 || task.value.repeatMode !== TASK_REPEAT_MODES.REPEAT_MODE_DEFAULT
 	activeFields.startDate = task.value.startDate !== null
+	activeFields.storyPoints = task.value.storyPoints > 0
+	activeFields.sprint = task.value.sprintId > 0
 }
 
 const activeFieldElements: { [id in FieldType]: HTMLElement | null } = reactive({
@@ -1056,6 +1121,9 @@ const activeFieldElements: { [id in FieldType]: HTMLElement | null } = reactive(
 	reminders: null,
 	repeatAfter: null,
 	startDate: null,
+	timeTracking: null,
+	storyPoints: null,
+	sprint: null,
 })
 
 function setFieldRef(name, e) {

@@ -6,6 +6,19 @@
 		:show-close="showClose"
 		@close="$emit('close')"
 	>
+		<div class="quick-filters mbe-2">
+			<XButton
+				v-for="qf in quickFilters"
+				:key="qf.key"
+				v-tooltip="qf.key === 'done' && viewHidesDone ? $t('filters.quick.doneDisabledHint') : ''"
+				variant="secondary"
+				:disabled="qf.key === 'done' && viewHidesDone"
+				@click="applyQuickFilter(qf.query)"
+			>
+				{{ qf.label }}
+			</XButton>
+		</div>
+
 		<FilterInput
 			ref="filterInputRef"
 			v-model="filterQuery"
@@ -13,7 +26,7 @@
 			class="mbe-2"
 			@update:modelValue="() => change('modelValue')"
 		/>
-		<div 
+		<div
 			v-if="filterFromView"
 			class="tw:text-sm mbe-2"
 		>
@@ -57,11 +70,13 @@
 
 <script setup lang="ts">
 import {computed, ref, watch} from 'vue'
+import {useI18n} from 'vue-i18n'
 import FancyCheckbox from '@/components/input/FancyCheckbox.vue'
 import {useRoute} from 'vue-router'
 import type {TaskFilterParams} from '@/services/taskCollection'
 import {useLabelStore} from '@/stores/labels'
 import {useProjectStore} from '@/stores/projects'
+import {useAuthStore} from '@/stores/auth'
 import {
 	hasFilterQuery,
 	transformFilterStringForApi,
@@ -189,6 +204,41 @@ function clearFiltersAndEmit() {
 	changeAndEmitButton()
 }
 
+const {t} = useI18n({useScope: 'global'})
+const authStore = useAuthStore()
+
+// Only the List view ships a `done = false` base filter today (see project_view.go).
+// Combining that with a user-entered `done = true` query ANDs into a permanent
+// contradiction (zero results, no error) - the exact trap that makes "done" tasks
+// seem to have vanished. Disable the quick filter there instead of letting it lie.
+const viewHidesDone = computed(() => (props.filterFromView ?? '').includes('done'))
+
+const quickFilters = computed(() => {
+	const filters = [
+		{key: 'done', label: t('filters.quick.done'), query: 'done = true'},
+		{key: 'overdue', label: t('filters.quick.overdue'), query: 'dueDate < now/d && done = false'},
+		{key: 'dueToday', label: t('filters.quick.dueToday'), query: 'dueDate >= now/d && dueDate < now/d+1d'},
+		{key: 'dueThisWeek', label: t('filters.quick.dueThisWeek'), query: 'dueDate >= now/w && dueDate < now/w+1w'},
+		{key: 'highPriority', label: t('filters.quick.highPriority'), query: 'priority >= 3'},
+	]
+
+	if (authStore.info?.username) {
+		filters.push({
+			key: 'assignedToMe',
+			label: t('filters.quick.assignedToMe'),
+			query: `assignees in ${authStore.info.username}`,
+		})
+	}
+
+	return filters
+})
+
+function applyQuickFilter(query: string) {
+	filterQuery.value = query
+	change('always')
+	emit('showResults')
+}
+
 function focusFilterInput() {
 	filterInputRef.value?.focus()
 }
@@ -197,3 +247,11 @@ defineExpose({
 	focusFilterInput,
 })
 </script>
+
+<style lang="scss" scoped>
+.quick-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: .5rem;
+}
+</style>

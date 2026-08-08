@@ -74,6 +74,17 @@
 						{{ $t('team.title') }}
 					</RouterLink>
 				</li>
+				<li>
+					<RouterLink
+						v-shortcut="'KeyG KeyS'"
+						:to="{ name: 'sprints.index'}"
+					>
+						<span class="menu-item-icon icon">
+							<Icon icon="chart-line" />
+						</span>
+						{{ $t('project.sprint.title') }}
+					</RouterLink>
+				</li>
 				<li v-if="timeTrackingEnabled">
 					<RouterLink :to="{ name: 'time-tracking'}">
 						<span class="menu-item-icon icon">

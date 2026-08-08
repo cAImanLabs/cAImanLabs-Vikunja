@@ -1142,7 +1142,7 @@ func CreateProject(s *xorm.Session, project *Project, auth web.Auth, createBackl
 	}
 
 	if createDefaultViews {
-		err = CreateDefaultViewsForProject(s, project, auth, createBacklogBucket, true)
+		err = CreateDefaultViewsForProject(s, project, auth, createBacklogBucket)
 		if err != nil {
 			return
 		}

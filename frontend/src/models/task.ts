@@ -78,6 +78,8 @@ export default class TaskModel extends AbstractModel<ITask> implements ITask {
 	parentTaskId: ITask['id'] = 0
 	hexColor = ''
 	percentDone = 0
+	storyPoints = 0
+	sprintId: ITask['sprintId'] = 0
 	relatedTasks:  Partial<Record<IRelationKind, ITask[]>> = {}
 	attachments: IAttachment[] = []
 	coverImageAttachmentId: IAttachment['id'] = null

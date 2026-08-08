@@ -2722,3 +2722,62 @@ func (err ErrUserDataExportDoesNotExist) HTTPError() web.HTTPError {
 		Message:  "No user data export found.",
 	}
 }
+
+// =================
+// Sprint errors
+// =================
+
+// ErrSprintDoesNotExist represents an error where a sprint does not exist.
+type ErrSprintDoesNotExist struct {
+	SprintID int64
+}
+
+// IsErrSprintDoesNotExist checks if an error is ErrSprintDoesNotExist.
+func IsErrSprintDoesNotExist(err error) bool {
+	_, ok := err.(ErrSprintDoesNotExist)
+	return ok
+}
+
+func (err ErrSprintDoesNotExist) Error() string {
+	return fmt.Sprintf("Sprint does not exist [SprintID: %d]", err.SprintID)
+}
+
+// ErrCodeSprintDoesNotExist holds the unique world-error code of this error
+const ErrCodeSprintDoesNotExist = 20001
+
+// HTTPError holds the http error description
+func (err ErrSprintDoesNotExist) HTTPError() web.HTTPError {
+	return web.HTTPError{
+		HTTPCode: http.StatusNotFound,
+		Code:     ErrCodeSprintDoesNotExist,
+		Message:  "This sprint does not exist.",
+	}
+}
+
+// ErrSprintMissingDates represents an error where a sprint's burndown was
+// requested but it has no start or end date set.
+type ErrSprintMissingDates struct {
+	SprintID int64
+}
+
+// IsErrSprintMissingDates checks if an error is ErrSprintMissingDates.
+func IsErrSprintMissingDates(err error) bool {
+	_, ok := err.(ErrSprintMissingDates)
+	return ok
+}
+
+func (err ErrSprintMissingDates) Error() string {
+	return fmt.Sprintf("Sprint has no start or end date [SprintID: %d]", err.SprintID)
+}
+
+// ErrCodeSprintMissingDates holds the unique world-error code of this error
+const ErrCodeSprintMissingDates = 20002
+
+// HTTPError holds the http error description
+func (err ErrSprintMissingDates) HTTPError() web.HTTPError {
+	return web.HTTPError{
+		HTTPCode: http.StatusPreconditionFailed,
+		Code:     ErrCodeSprintMissingDates,
+		Message:  "This sprint needs a start and end date to show a burndown chart.",
+	}
+}

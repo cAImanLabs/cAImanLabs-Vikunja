@@ -1,0 +1,21 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "vikunja-api",
+      "runtimeExecutable": "./vikunja",
+      "runtimeArgs": ["web"],
+      "port": 3456
+    },
+    {
+      "name": "vikunja-frontend",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "./frontend/node_modules/vite/bin/vite.js",
+        "./frontend",
+        "--config", "./frontend/vite.config.ts"
+      ],
+      "port": 4173
+    }
+  ]
+}

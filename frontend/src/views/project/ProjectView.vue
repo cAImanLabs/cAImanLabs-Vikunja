@@ -13,6 +13,7 @@ import ProjectList from '@/components/project/views/ProjectList.vue'
 import ProjectGantt from '@/components/project/views/ProjectGantt.vue'
 import ProjectTable from '@/components/project/views/ProjectTable.vue'
 import ProjectKanban from '@/components/project/views/ProjectKanban.vue'
+import ProjectSprint from '@/components/project/views/ProjectSprint.vue'
 
 import {DEFAULT_PROJECT_VIEW_SETTINGS} from '@/modelTypes/IProjectView'
 import {saveProjectToHistory} from '@/modules/projectHistory'
@@ -56,6 +57,16 @@ watch(
 			// Here, we only set the new project in the projectStore.
 			// Setting that projet as the current one in the baseStore is handled by the watcher below.
 			projectStore.setProject(loadedProject)
+		} catch (e) {
+			// 403/404 otherwise renders a silent blank page (no view matches, nothing
+			// tells the user why) that's indistinguishable from the project's data
+			// having vanished. Route to the same not-found page tasks use in this case.
+			if (e?.response?.status === 404 || e?.response?.status === 403) {
+				router.replace({name: 'not-found'})
+				return
+			}
+
+			throw e
 		} finally {
 			loadedProjectId.value = projectIdToLoad
 		}
@@ -153,6 +164,12 @@ watchEffect(() => baseStore.setCurrentProjectViewId(props.viewId))
 	/>
 	<ProjectKanban
 		v-if="currentView?.viewKind === 'kanban'"
+		:project-id="projectId"
+		:is-loading-project="isLoadingProject"
+		:view-id
+	/>
+	<ProjectSprint
+		v-if="currentView?.viewKind === 'sprint'"
 		:project-id="projectId"
 		:is-loading-project="isLoadingProject"
 		:view-id

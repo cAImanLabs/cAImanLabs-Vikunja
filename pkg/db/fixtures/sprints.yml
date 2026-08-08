@@ -1,0 +1,48 @@
+- id: 1
+  title: Sprint 1
+  goal: Ship the first milestone
+  status: 0 # planning
+  project_id: 1
+  created_by_id: 1
+  created: 2020-04-18 21:13:52
+  updated: 2020-04-18 21:13:52
+- id: 2
+  title: Sprint 2
+  goal: Stabilize
+  status: 1 # active
+  project_id: 1
+  created_by_id: 1
+  created: 2020-04-19 21:13:52
+  updated: 2020-04-19 21:13:52
+- id: 3
+  title: Other project sprint
+  goal: ""
+  status: 0 # planning
+  project_id: 2
+  created_by_id: 3
+  created: 2020-04-18 21:13:52
+  updated: 2020-04-18 21:13:52
+- id: 4
+  title: Shared read sprint
+  goal: ""
+  status: 0 # planning
+  project_id: 9
+  created_by_id: 6
+  created: 2020-04-18 21:13:52
+  updated: 2020-04-18 21:13:52
+- id: 5
+  title: Shared write sprint
+  goal: ""
+  status: 0 # planning
+  project_id: 10
+  created_by_id: 6
+  created: 2020-04-18 21:13:52
+  updated: 2020-04-18 21:13:52
+- id: 6
+  title: Shared admin sprint
+  goal: ""
+  status: 0 # planning
+  project_id: 11
+  created_by_id: 6
+  created: 2020-04-18 21:13:52
+  updated: 2020-04-18 21:13:52

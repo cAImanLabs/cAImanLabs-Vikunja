@@ -293,7 +293,7 @@ func createProjectWithEverything(s *xorm.Session, project *models.ProjectWithTas
 		}
 	} else {
 		if len(project.Views) == 0 {
-			err = models.CreateDefaultViewsForProject(s, &project.Project, user, true, true)
+			err = models.CreateDefaultViewsForProject(s, &project.Project, user, true)
 			if err != nil {
 				return
 			}
