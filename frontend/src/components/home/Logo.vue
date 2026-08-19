@@ -1,27 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useNow } from '@vueuse/core'
-import { useAuthStore } from '@/stores/auth'
-import { useConfigStore } from '@/stores/config'
 import { useColorScheme } from '@/composables/useColorScheme'
 
-import LogoFull from '@/assets/logo-full.svg?component'
-import LogoFullPride from '@/assets/logo-full-pride.svg?component'
-import {MILLISECONDS_A_HOUR} from '@/constants/date'
+import LogoIcon from '@/assets/logo-icon.png'
 
-const now = useNow({
-	interval: MILLISECONDS_A_HOUR,
-})
-
-const authStore = useAuthStore()
-const configStore = useConfigStore()
 const { isDark } = useColorScheme()
-
-const Logo = computed(() => configStore.allowIconChanges
-	&& authStore.settings.frontendSettings.allowIconChanges
-	&& now.value.getMonth() === 5
-	? LogoFullPride
-	: LogoFull)
 
 const CustomLogo = computed(() => {
 	const lightLogo = window.CUSTOM_LOGO_URL
@@ -36,25 +19,36 @@ const CustomLogo = computed(() => {
 </script>
 
 <template>
-	<div>
-		<Logo
-			v-if="!CustomLogo"
-			alt="Vikunja"
-			class="logo"
-		/>
+	<div class="logo-wrapper">
 		<img
-			v-show="CustomLogo"
-			:src="CustomLogo"
-			alt="Vikunja"
+			:src="CustomLogo || LogoIcon"
+			alt="cAImanDesk"
 			class="logo"
 		>
+		<span
+			v-if="!CustomLogo"
+			class="logo-text"
+		>cAImanDesk</span>
 	</div>
 </template>
 
 <style lang="scss" scoped>
-.logo {
-	color: var(--logo-text-color);
+.logo-wrapper {
+	display: flex;
+	align-items: center;
+	gap: .5rem;
 	max-inline-size: 168px;
-	max-block-size: 48px;
+}
+
+.logo {
+	max-block-size: 40px;
+	max-inline-size: 40px;
+}
+
+.logo-text {
+	color: var(--logo-text-color);
+	font-weight: 700;
+	font-size: 1.1rem;
+	white-space: nowrap;
 }
 </style>

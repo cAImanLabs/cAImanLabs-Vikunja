@@ -1,5 +1,6 @@
-// Vikunja is a to-do list application to facilitate your life.
+// cAImanDesk is a to-do list application to facilitate your life, forked from Vikunja.
 // Copyright 2018-present Vikunja and contributors. All rights reserved.
+// Portions Copyright 2026-present cAImanLabs and contributors.
 
 package migration
 

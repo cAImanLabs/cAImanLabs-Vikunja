@@ -91,7 +91,7 @@ function registerAppImageProtocolHandler() {
 		const quotedExecPath = '"' + appImagePath.replace(/["`$\\]/g, '\\$&').replace(/%/g, '%%') + '"'
 		const desktopEntry = [
 			'[Desktop Entry]',
-			'Name=Vikunja Desktop',
+			'Name=cAImanDesk Desktop',
 			'Type=Application',
 			`Exec=${quotedExecPath} %u`,
 			'Terminal=false',
@@ -483,7 +483,7 @@ function setupTray() {
 		const iconPath = path.join(__dirname, 'icon.png')
 		const icon = nativeImage.createFromPath(iconPath).resize({width: 16, height: 16})
 		tray = new Tray(icon)
-		tray.setToolTip('Vikunja')
+		tray.setToolTip('cAImanDesk')
 		tray.on('click', () => {
 			if (mainWindow) {
 				mainWindow.show()
@@ -496,7 +496,7 @@ function setupTray() {
 
 	const contextMenu = Menu.buildFromTemplate([
 		{
-			label: 'Show Vikunja',
+			label: 'Show cAImanDesk',
 			click: () => {
 				if (mainWindow) {
 					mainWindow.show()

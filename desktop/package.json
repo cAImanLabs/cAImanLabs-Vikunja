@@ -1,16 +1,15 @@
 {
-  "name": "vikunja-desktop",
+  "name": "caimandesk-desktop",
   "version": "v0.1.0",
-  "description": "Vikunja's frontend as a standalone desktop application.",
+  "description": "cAImanDesk's frontend as a standalone desktop application.",
   "main": "main.js",
-  "repository": "https://code.vikunja.io/desktop",
+  "repository": "https://github.com/cAImanLabs/cAImanLabs-Vikunja",
   "license": "GPL-3.0-or-later",
   "packageManager": "pnpm@11.19.0",
   "author": {
-    "email": "maintainers@vikunja.io",
-    "name": "Vikunja Team"
+    "name": "cAImanLabs"
   },
-  "homepage": "https://vikunja.io",
+  "homepage": "https://github.com/cAImanLabs/cAImanLabs-Vikunja",
   "scripts": {
     "build:frontend": "cd ../frontend && pnpm run build && cd ../desktop && rm -rf frontend && cp -r ../frontend/dist frontend",
     "start": "electron .",
@@ -23,11 +22,11 @@
       "**/*",
       "preload-quick-entry.js"
     ],
-    "productName": "Vikunja Desktop",
+    "productName": "cAImanDesk Desktop",
     "artifactName": "${productName}-${version}.${ext}",
     "icon": "build/icon.icns",
     "protocols": {
-      "name": "Vikunja Desktop",
+      "name": "cAImanDesk Desktop",
       "schemes": ["vikunja-desktop"]
     },
     "linux": {

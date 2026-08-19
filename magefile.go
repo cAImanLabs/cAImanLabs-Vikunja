@@ -1,5 +1,6 @@
-// Vikunja is a to-do list application to facilitate your life.
+// cAImanDesk is a to-do list application to facilitate your life, forked from Vikunja.
 // Copyright 2018-present Vikunja and contributors. All rights reserved.
+// Portions Copyright 2026-present cAImanLabs and contributors.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -1188,8 +1189,9 @@ func (Dev) MakeMigration(name string) error {
 
 	date := time.Now().Format("20060102150405")
 
-	migration := `// Vikunja is a to-do list application to facilitate your life.
+	migration := `// cAImanDesk is a to-do list application to facilitate your life, forked from Vikunja.
 // Copyright 2018-present Vikunja and contributors. All rights reserved.
+// Portions Copyright 2026-present cAImanLabs and contributors.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by

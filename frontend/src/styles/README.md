@@ -1,6 +1,6 @@
 # Frontend Styles
 
-This directory contains all global styling for the Vikunja web client. Component-scoped
+This directory contains all global styling for the cAImanDesk web client. Component-scoped
 styles live next to their `.vue` file; what lives here is the material every component
 relies on: the Bulma base, the design-token system (CSS custom properties), typography,
 and a handful of cross-cutting theme overrides.
@@ -76,7 +76,7 @@ Add a variable to `common-imports.scss` when you need it available in multiple c
 
 ## Bulma: which variant and why
 
-Vikunja uses [`bulma-css-variables`](https://www.npmjs.com/package/bulma-css-variables), a
+cAImanDesk uses [`bulma-css-variables`](https://www.npmjs.com/package/bulma-css-variables), a
 fork of Bulma that emits CSS custom properties (`--primary`, `--text`, `--scheme-main`, …)
 instead of inlining SCSS variables. This is what makes runtime theming (including dark
 mode) possible without recompiling SCSS.
@@ -137,8 +137,8 @@ light-mode `--grey-50` value, and so on down the ladder.
 The `--scheme-main`, `--scheme-main-bis`, `--scheme-invert`, … block at the top of
 `colors.scss` mirrors Bulma's own defaults and exists as a workaround for a
 `bulma-css-variables` scoping bug (see [vikunja/frontend#1064][1]). Don't touch those
-lines except to update Bulma. The Vikunja-specific tokens and overrides start below the
-`// Vikunja specific variables` comment.
+lines except to update Bulma. The cAImanDesk-specific tokens and overrides start below the
+`// cAImanDesk specific variables` comment.
 
 [1]: https://kolaente.dev/vikunja/frontend/issues/1064
 
