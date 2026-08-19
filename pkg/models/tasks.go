@@ -1596,6 +1596,18 @@ func (t *Task) updateSingleTask(s *xorm.Session, a web.Auth, fields []string) (e
 	if t.CoverImageAttachmentID == 0 {
 		ot.CoverImageAttachmentID = 0
 	}
+	// Story points
+	if t.StoryPoints == 0 {
+		ot.StoryPoints = 0
+	}
+	// Sprint
+	if t.SprintID == 0 {
+		ot.SprintID = 0
+	}
+	// Kind - TaskKindTask is the zero value, so mergo treats "reset to task" as unset
+	if t.Kind == TaskKindTask {
+		ot.Kind = TaskKindTask
+	}
 
 	_, err = s.ID(t.ID).
 		Cols(colsToUpdate...).

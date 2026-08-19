@@ -269,6 +269,48 @@ func TestTask_Update(t *testing.T) {
 			"kind": TaskKindBug,
 		}, false)
 	})
+	t.Run("kind, story points and sprint can be reset to their zero value", func(t *testing.T) {
+		// mergo.Merge (used below in updateSingleTask to work around xorm not
+		// detecting changed fields) treats a zero-valued field on the incoming
+		// task as "not set" and keeps the old value instead of overriding it.
+		// Every other zero-valuable field has an explicit post-merge fixup for
+		// this; kind/story_points/sprint_id need the same or resetting them
+		// back to their default silently no-ops.
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
+
+		task := &Task{
+			ID:          1,
+			Title:       "test10000",
+			ProjectID:   1,
+			Kind:        TaskKindBug,
+			StoryPoints: 8,
+			SprintID:    1,
+		}
+		err := task.Update(s, u)
+		require.NoError(t, err)
+
+		task = &Task{
+			ID:          1,
+			Title:       "test10000",
+			ProjectID:   1,
+			Kind:        TaskKindTask,
+			StoryPoints: 0,
+			SprintID:    0,
+		}
+		err = task.Update(s, u)
+		require.NoError(t, err)
+		err = s.Commit()
+		require.NoError(t, err)
+
+		db.AssertExists(t, "tasks", map[string]interface{}{
+			"id":           1,
+			"kind":         TaskKindTask,
+			"story_points": 0,
+			"sprint_id":    0,
+		}, false)
+	})
 	t.Run("default bucket when moving a task between projects", func(t *testing.T) {
 		db.LoadAndAssertFixtures(t)
 		s := db.NewSession()
