@@ -1218,7 +1218,10 @@
       "story": "Story",
       "bug": "Bug",
       "subtask": "Sub-task",
-      "feature": "New Feature"
+      "feature": "Feature",
+      "initiative": "Initiative",
+      "childrenNudge": "This {kind} doesn't have any child tasks yet. Add one below in Related Tasks.",
+      "parentRequiredHint": "A Sub-task needs a parent - add one below in Related Tasks."
     },
     "relation": {
       "add": "Add a New Task Relation",
@@ -1545,6 +1548,8 @@
     "4021": "This user is already assigned to that task.",
     "4022": "Please provide what the reminder date is relative to.",
     "4023": "Cannot create a task relation cycle.",
+    "4032": "A Sub-task must have a parent relation to a Story, Task or Bug before it can be saved. Add one via Related Tasks first.",
+    "4033": "This is the task's only parent relation; a Sub-task must always have one. Change its type before removing this relation.",
     "6001": "The team name cannot be empty.",
     "6002": "The team does not exist.",
     "6004": "The team already has access to that project.",

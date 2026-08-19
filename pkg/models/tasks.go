@@ -21,6 +21,7 @@ import (
 	"errors"
 	"math"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -112,7 +113,7 @@ type Task struct {
 	// Sprint ID this task belongs to
 	SprintID int64 `xorm:"bigint INDEX null 'sprint_id'" json:"sprint_id" doc:"The id of the sprint this task belongs to."`
 	// The kind of task this is, similar to an issue type. Can be `task`, `epic`, `story`, `bug`, `subtask` or `feature`.
-	Kind TaskKind `xorm:"not null default 0 'kind'" json:"kind" swaggertype:"string" enums:"task,epic,story,bug,subtask,feature" doc:"The kind of task this is, similar to an issue type. One of task, epic, story, bug, subtask or feature."`
+	Kind TaskKind `xorm:"not null default 0 'kind'" json:"kind" swaggertype:"string" enums:"task,epic,story,bug,subtask,feature,initiative" doc:"The kind of task this is, similar to an issue type. One of task, epic, story, bug, subtask, feature or initiative. These map to a 5-level hierarchy (initiative > feature > epic > story/task/bug > subtask); a subtask requires a parenttask relation to a story/task/bug."`
 
 	// The task identifier, based on the project identifier and the task's index
 	Identifier string `xorm:"-" json:"identifier" readOnly:"true" doc:"The textual task identifier, derived from the project identifier and the task index (e.g. \"PROJ-12\")."`
@@ -1610,6 +1611,19 @@ func (t *Task) updateSingleTask(s *xorm.Session, a web.Auth, fields []string) (e
 		ot.Kind = TaskKindTask
 	}
 
+	// A Sub-task must always have a parent to hang off of; only check when kind
+	// is actually part of this write so unrelated edits on legacy data don't
+	// suddenly start failing.
+	if slices.Contains(colsToUpdate, "kind") && ot.Kind == TaskKindSubtask {
+		hasParent, err := taskHasBaseIssueParent(s, ot.ID)
+		if err != nil {
+			return err
+		}
+		if !hasParent {
+			return ErrTaskKindRequiresParentRelation{TaskID: ot.ID}
+		}
+	}
+
 	_, err = s.ID(t.ID).
 		Cols(colsToUpdate...).
 		Update(&ot)
@@ -1633,6 +1647,29 @@ func (t *Task) updateSingleTask(s *xorm.Session, a web.Auth, fields []string) (e
 	})
 
 	return updateProjectLastUpdated(s, &Project{ID: t.ProjectID})
+}
+
+// taskHasBaseIssueParent reports whether taskID has a "parenttask" relation
+// pointing to a Story, Task or Bug - the requirement for a task to be a
+// Sub-task in the hierarchy (see TaskKind.TaskKindLevel).
+func taskHasBaseIssueParent(s *xorm.Session, taskID int64) (bool, error) {
+	parentIDs := []int64{}
+	err := s.
+		Table("task_relations").
+		Where("task_id = ? AND relation_kind = ?", taskID, RelationKindParenttask).
+		Cols("other_task_id").
+		Find(&parentIDs)
+	if err != nil {
+		return false, err
+	}
+	if len(parentIDs) == 0 {
+		return false, nil
+	}
+
+	return s.
+		In("id", parentIDs).
+		In("kind", TaskKindTask, TaskKindStory, TaskKindBug).
+		Exist(&Task{})
 }
 
 // updateTasks updates multiple tasks with the same payload.

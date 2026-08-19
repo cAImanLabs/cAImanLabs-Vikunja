@@ -312,6 +312,40 @@ func TestTask_Update(t *testing.T) {
 			"sprint_id":    0,
 		}, false)
 	})
+	t.Run("kind subtask requires a parenttask relation to a base issue", func(t *testing.T) {
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
+
+		// Task 2 has no relations at all yet.
+		task := &Task{
+			ID:        2,
+			Title:     "test10000",
+			ProjectID: 1,
+			Kind:      TaskKindSubtask,
+		}
+		err := task.Update(s, u)
+		require.Error(t, err)
+		assert.True(t, IsErrTaskKindRequiresParentRelation(err))
+
+		rel := &TaskRelation{
+			TaskID:       2,
+			OtherTaskID:  1, // task 1 is kind Task (default), a valid base issue
+			RelationKind: RelationKindParenttask,
+		}
+		err = rel.Create(s, u)
+		require.NoError(t, err)
+
+		err = task.Update(s, u)
+		require.NoError(t, err)
+		err = s.Commit()
+		require.NoError(t, err)
+
+		db.AssertExists(t, "tasks", map[string]interface{}{
+			"id":   2,
+			"kind": TaskKindSubtask,
+		}, false)
+	})
 	t.Run("default bucket when moving a task between projects", func(t *testing.T) {
 		db.LoadAndAssertFixtures(t)
 		s := db.NewSession()

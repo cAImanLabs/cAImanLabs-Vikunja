@@ -893,6 +893,63 @@ func (err ErrRelationDoesNotExist) HTTPError() web.HTTPError {
 	}
 }
 
+// ErrTaskKindRequiresParentRelation represents an error where a task is being
+// saved with Kind Subtask but has no "parenttask" relation to a Story, Task
+// or Bug.
+type ErrTaskKindRequiresParentRelation struct {
+	TaskID int64
+}
+
+// IsErrTaskKindRequiresParentRelation checks if an error is ErrTaskKindRequiresParentRelation.
+func IsErrTaskKindRequiresParentRelation(err error) bool {
+	_, ok := err.(ErrTaskKindRequiresParentRelation)
+	return ok
+}
+
+func (err ErrTaskKindRequiresParentRelation) Error() string {
+	return fmt.Sprintf("Task kind subtask requires a parent relation [TaskID: %d]", err.TaskID)
+}
+
+// ErrCodeTaskKindRequiresParentRelation holds the unique world-error code of this error
+const ErrCodeTaskKindRequiresParentRelation = 4032
+
+// HTTPError holds the http error description
+func (err ErrTaskKindRequiresParentRelation) HTTPError() web.HTTPError {
+	return web.HTTPError{
+		HTTPCode: http.StatusBadRequest,
+		Code:     ErrCodeTaskKindRequiresParentRelation,
+		Message:  "A Sub-task must have a parent relation to a Story, Task or Bug before it can be saved. Add one via Related Tasks first.",
+	}
+}
+
+// ErrCannotRemoveLastSubtaskParent represents an error where the user tries
+// to delete the last "parenttask" relation of a task whose Kind is Subtask.
+type ErrCannotRemoveLastSubtaskParent struct {
+	TaskID int64
+}
+
+// IsErrCannotRemoveLastSubtaskParent checks if an error is ErrCannotRemoveLastSubtaskParent.
+func IsErrCannotRemoveLastSubtaskParent(err error) bool {
+	_, ok := err.(ErrCannotRemoveLastSubtaskParent)
+	return ok
+}
+
+func (err ErrCannotRemoveLastSubtaskParent) Error() string {
+	return fmt.Sprintf("Cannot remove the last parent relation of a subtask [TaskID: %d]", err.TaskID)
+}
+
+// ErrCodeCannotRemoveLastSubtaskParent holds the unique world-error code of this error
+const ErrCodeCannotRemoveLastSubtaskParent = 4033
+
+// HTTPError holds the http error description
+func (err ErrCannotRemoveLastSubtaskParent) HTTPError() web.HTTPError {
+	return web.HTTPError{
+		HTTPCode: http.StatusPreconditionFailed,
+		Code:     ErrCodeCannotRemoveLastSubtaskParent,
+		Message:  "This is the task's only parent relation; a Sub-task must always have one. Change its type before removing this relation.",
+	}
+}
+
 // ErrRelationTasksCannotBeTheSame represents an error where the user tries to relate a task with itself
 type ErrRelationTasksCannotBeTheSame struct {
 	TaskID      int64

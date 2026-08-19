@@ -272,6 +272,66 @@ func (rel *TaskRelation) Create(s *xorm.Session, a web.Auth) error {
 	return nil
 }
 
+// ensureSubtaskKeepsAParent blocks removing a "parenttask"/"subtask" relation
+// if the child side is a Subtask-kind task and this is its only remaining
+// base-issue parent - a Sub-task must always have one (see updateSingleTask's
+// symmetric check on save).
+func ensureSubtaskKeepsAParent(s *xorm.Session, rel *TaskRelation) error {
+	if rel.RelationKind != RelationKindParenttask && rel.RelationKind != RelationKindSubtask {
+		return nil
+	}
+
+	childTaskID := rel.TaskID
+	if rel.RelationKind == RelationKindSubtask {
+		childTaskID = rel.OtherTaskID
+	}
+
+	child := &Task{}
+	has, err := s.ID(childTaskID).Get(child)
+	if err != nil {
+		return err
+	}
+	if !has || child.Kind != TaskKindSubtask {
+		return nil
+	}
+
+	remainingParentIDs := []int64{}
+	err = s.
+		Table("task_relations").
+		Where("task_id = ? AND relation_kind = ? AND other_task_id != ?", childTaskID, RelationKindParenttask, rel.otherTaskIDOf(childTaskID)).
+		Cols("other_task_id").
+		Find(&remainingParentIDs)
+	if err != nil {
+		return err
+	}
+	if len(remainingParentIDs) == 0 {
+		return ErrCannotRemoveLastSubtaskParent{TaskID: childTaskID}
+	}
+
+	stillHasBaseIssueParent, err := s.
+		In("id", remainingParentIDs).
+		In("kind", TaskKindTask, TaskKindStory, TaskKindBug).
+		Exist(&Task{})
+	if err != nil {
+		return err
+	}
+	if !stillHasBaseIssueParent {
+		return ErrCannotRemoveLastSubtaskParent{TaskID: childTaskID}
+	}
+
+	return nil
+}
+
+// otherTaskIDOf returns the task ID on the "parent" side of this relation,
+// regardless of whether it's declared from the child's or the parent's
+// perspective.
+func (rel *TaskRelation) otherTaskIDOf(childTaskID int64) int64 {
+	if rel.TaskID == childTaskID {
+		return rel.OtherTaskID
+	}
+	return rel.TaskID
+}
+
 // ReadOne returns a task relation
 func (rel *TaskRelation) ReadOne(s *xorm.Session, _ web.Auth) (err error) {
 	exists, err := s.
@@ -316,6 +376,10 @@ func (rel *TaskRelation) Delete(s *xorm.Session, a web.Auth) error {
 	// Load the full relation first (populates CreatedBy)
 	err := rel.ReadOne(s, a)
 	if err != nil {
+		return err
+	}
+
+	if err := ensureSubtaskKeepsAParent(s, rel); err != nil {
 		return err
 	}
 

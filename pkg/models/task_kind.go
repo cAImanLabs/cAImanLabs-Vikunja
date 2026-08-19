@@ -34,7 +34,9 @@ type TaskKind int64
 
 // NOTE: When adding or changing enum values for TaskKind, make sure to update
 // the corresponding `enum` tag on Task.Kind to keep the OpenAPI documentation
-// in sync.
+// in sync. New values must be appended (never inserted) - the int64 is the
+// value actually persisted in the `kind` column, so reordering would silently
+// reinterpret every already-stored task's kind.
 const (
 	TaskKindTask TaskKind = iota
 	TaskKindEpic
@@ -42,6 +44,7 @@ const (
 	TaskKindBug
 	TaskKindSubtask
 	TaskKindFeature
+	TaskKindInitiative
 )
 
 func (k *TaskKind) MarshalJSON() ([]byte, error) {
@@ -58,6 +61,8 @@ func (k *TaskKind) MarshalJSON() ([]byte, error) {
 		return []byte(`"subtask"`), nil
 	case TaskKindFeature:
 		return []byte(`"feature"`), nil
+	case TaskKindInitiative:
+		return []byte(`"initiative"`), nil
 	}
 
 	return []byte(`null`), nil
@@ -83,6 +88,8 @@ func (k *TaskKind) UnmarshalJSON(bytes []byte) error {
 		*k = TaskKindSubtask
 	case "feature":
 		*k = TaskKindFeature
+	case "initiative":
+		*k = TaskKindInitiative
 	default:
 		return fmt.Errorf("unknown task kind: %s", value)
 	}
@@ -95,6 +102,30 @@ func (k *TaskKind) UnmarshalJSON(bytes []byte) error {
 func (*TaskKind) Schema(_ huma.Registry) *huma.Schema {
 	return &huma.Schema{
 		Type: "string",
-		Enum: []any{"task", "epic", "story", "bug", "subtask", "feature"},
+		Enum: []any{"task", "epic", "story", "bug", "subtask", "feature", "initiative"},
 	}
+}
+
+// TaskKindLevel places a kind in the 5-level SAFe-style hierarchy this app
+// enforces relations against (see updateSingleTask's kind-relation checks):
+//
+//	4 Initiative  - strategic, cross-team goals spanning quarters
+//	3 Feature     - major deliverables under an initiative, spanning sprints
+//	2 Epic        - a targeted set of work under a feature, one team's backlog
+//	1 Story/Task/Bug - the day-to-day work done in a single sprint
+//	0 Subtask     - granular steps to complete a single base issue
+func (k *TaskKind) TaskKindLevel() int {
+	switch *k {
+	case TaskKindSubtask:
+		return 0
+	case TaskKindEpic:
+		return 2
+	case TaskKindFeature:
+		return 3
+	case TaskKindInitiative:
+		return 4
+	case TaskKindTask, TaskKindStory, TaskKindBug:
+		return 1
+	}
+	return 1
 }

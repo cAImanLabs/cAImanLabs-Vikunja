@@ -23,7 +23,8 @@ const KIND_ICONS = {
 	[TASK_KINDS.STORY]: 'bookmark',
 	[TASK_KINDS.BUG]: 'bug',
 	[TASK_KINDS.SUBTASK]: 'arrow-turn-down',
-	[TASK_KINDS.FEATURE]: 'star',
+	[TASK_KINDS.FEATURE]: 'layer-group',
+	[TASK_KINDS.INITIATIVE]: 'bullseye',
 } as const satisfies Record<TaskKind, string>
 </script>
 
@@ -61,6 +62,10 @@ const KIND_ICONS = {
 
 	&.kind-feature {
 		color: var(--info);
+	}
+
+	&.kind-initiative {
+		color: var(--link-visited);
 	}
 }
 </style>

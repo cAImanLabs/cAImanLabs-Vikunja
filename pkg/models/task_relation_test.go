@@ -317,6 +317,48 @@ func TestTaskRelation_Delete(t *testing.T) {
 		require.Error(t, err)
 		assert.True(t, IsErrRelationDoesNotExist(err))
 	})
+	t.Run("cannot remove the only parent of a subtask", func(t *testing.T) {
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
+
+		// Task 29 is already a parenttask-related child of task 1 (fixture);
+		// make it an actual Sub-task, matching that relation.
+		task := &Task{ID: 29, Title: "task #29 with parent task (1)", ProjectID: 1, Kind: TaskKindSubtask}
+		err := task.Update(s, u)
+		require.NoError(t, err)
+
+		rel := TaskRelation{
+			TaskID:       29,
+			OtherTaskID:  1,
+			RelationKind: RelationKindParenttask,
+		}
+		err = rel.Delete(s, u)
+		require.Error(t, err)
+		assert.True(t, IsErrCannotRemoveLastSubtaskParent(err))
+
+		// The relation must still be there.
+		db.AssertExists(t, "task_relations", map[string]interface{}{
+			"task_id":       29,
+			"other_task_id": 1,
+			"relation_kind": RelationKindParenttask,
+		}, false)
+	})
+	t.Run("can remove a parent relation the task does not depend on", func(t *testing.T) {
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
+
+		// Task 29 stays kind Task (default) here, so the parenttask relation
+		// isn't required and removing it must succeed as before.
+		rel := TaskRelation{
+			TaskID:       29,
+			OtherTaskID:  1,
+			RelationKind: RelationKindParenttask,
+		}
+		err := rel.Delete(s, u)
+		require.NoError(t, err)
+	})
 }
 
 func TestTaskRelation_CanCreate(t *testing.T) {

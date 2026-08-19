@@ -176,8 +176,18 @@
 									:ref="e => setFieldRef('kind', e)"
 									v-model="task.kind"
 									:disabled="!canWrite"
-									@update:modelValue="saveTask()"
+									@update:modelValue="saveKind()"
 								/>
+								<Message
+									v-if="kindNeedsChildrenNudge"
+									variant="warning"
+									class="mbs-2"
+								>
+									{{ $t('task.kind.childrenNudge', {kind: $t(`task.kind.${task.kind}`)}) }}
+									<a @click="kindNeedsChildrenNudge = false; setFieldActive('relatedTasks')">
+										{{ $t('task.relation.add') }}
+									</a>
+								</Message>
 							</div>
 						</CustomTransition>
 						<CustomTransition
@@ -751,11 +761,13 @@ import type {IAttachment} from '@/modelTypes/IAttachment'
 import type {IProject} from '@/modelTypes/IProject'
 
 import {PRIORITIES, type Priority} from '@/constants/priorities'
-import {TASK_KINDS} from '@/modelTypes/ITaskKind'
+import {TASK_KINDS, TASK_KINDS_REQUESTING_CHILDREN, type TaskKind} from '@/modelTypes/ITaskKind'
+import {RELATION_KIND} from '@/types/IRelationKind'
 import {PERMISSIONS} from '@/constants/permissions'
 import {PRO_FEATURE} from '@/constants/proFeatures'
 
 import BaseButton from '@/components/base/BaseButton.vue'
+import Message from '@/components/misc/Message.vue'
 
 // partials
 import Attachments from '@/components/tasks/partials/Attachments.vue'
@@ -802,7 +814,7 @@ import {useConfigStore} from '@/stores/config'
 import {useTitle} from '@/composables/useTitle'
 import {useTaskDetailShortcuts} from '@/composables/useTaskDetailShortcuts'
 
-import {success} from '@/message'
+import {success, error} from '@/message'
 import type {Action as MessageAction} from '@/message'
 
 const props = defineProps<{
@@ -827,6 +839,12 @@ const authStore = useAuthStore()
 const baseStore = useBaseStore()
 
 const task = ref<ITask>(new TaskModel())
+// Tracks the last kind that actually made it to the server, so a failed
+// kind change (e.g. Sub-task without a parent relation) can be reverted -
+// v-model has already applied the new value to task.value.kind by the time
+// the change handler runs, so there's no other way to recover the old one.
+let lastSavedKind: TaskKind = TASK_KINDS.TASK
+const kindNeedsChildrenNudge = ref(false)
 const hasAttachments = computed(() => (task.value.attachments?.length ?? 0) > 0)
 const remindersDefaultRelativeTo = computed(() => {
 	if (task.value.dueDate) {
@@ -1049,6 +1067,8 @@ watch(
 			const loaded = await taskService.get({id}, {expand})
 			Object.assign(task.value, loaded)
 			taskColor.value = task.value.hexColor
+			lastSavedKind = task.value.kind
+			kindNeedsChildrenNudge.value = false
 			setActiveFields()
 
 			if (task.value.isUnread) {
@@ -1227,6 +1247,25 @@ async function saveTask(
 		}]
 	}
 	success({message: t('task.detail.updateSuccess')}, actions)
+}
+
+// Sub-task requires a parenttask relation server-side (see updateSingleTask);
+// on rejection, revert the select instead of leaving it showing a kind that
+// never actually saved. Epic/Feature/Initiative save normally but get a
+// dismissible nudge if they still have no children.
+async function saveKind() {
+	const attemptedKind = task.value.kind
+	try {
+		await saveTask()
+		lastSavedKind = attemptedKind
+		kindNeedsChildrenNudge.value = TASK_KINDS_REQUESTING_CHILDREN.includes(attemptedKind) &&
+			(task.value.relatedTasks[RELATION_KIND.SUBTASK]?.length ?? 0) === 0
+	} catch (e) {
+		task.value.kind = lastSavedKind
+		kindNeedsChildrenNudge.value = false
+		error(e)
+		setFieldActive('relatedTasks')
+	}
 }
 
 useTaskDetailShortcuts({
