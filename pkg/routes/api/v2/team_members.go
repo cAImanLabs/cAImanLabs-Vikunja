@@ -19,12 +19,18 @@ package apiv2
 import (
 	"context"
 	"net/http"
+	"regexp"
+	"strings"
 
+	"code.vikunja.io/api/pkg/db"
 	"code.vikunja.io/api/pkg/models"
+	"code.vikunja.io/api/pkg/user"
 	"code.vikunja.io/api/pkg/web/handler"
 
 	"github.com/danielgtaylor/huma/v2"
 )
+
+var hexColorPattern = regexp.MustCompile(`^#?[0-9a-fA-F]{6}$`)
 
 // RegisterTeamMemberRoutes wires team membership management onto the Huma API.
 //
@@ -60,6 +66,16 @@ func RegisterTeamMemberRoutes(api huma.API) {
 		DefaultStatus: http.StatusOK,
 		Tags:          tags,
 	}, teamMembersToggleAdmin)
+
+	Register(api, huma.Operation{
+		OperationID:   "teams-members-set-color",
+		Summary:       "Set a team member's color",
+		Description:   "Sets the color shown on tasks assigned to this member, everywhere (not just within this team). Only a team admin may do this.",
+		Method:        http.MethodPut,
+		Path:          "/teams/{team}/members/{user}/color",
+		DefaultStatus: http.StatusOK,
+		Tags:          tags,
+	}, teamMembersSetColor)
 }
 
 func init() { AddRouteRegistrar(RegisterTeamMemberRoutes) }
@@ -108,4 +124,52 @@ func teamMembersToggleAdmin(ctx context.Context, in *struct {
 		return nil, translateDomainError(err)
 	}
 	return &singleBody[models.TeamMember]{Body: tm}, nil
+}
+
+// teamMembersSetColor is a custom action, not a plain CRUD update (it writes
+// to the user table, not team_members), so permission enforcement and
+// session management are this handler's own responsibility - see the
+// api-v2-routes skill.
+func teamMembersSetColor(ctx context.Context, in *struct {
+	TeamID   int64  `path:"team"`
+	Username string `path:"user" doc:"The username of the member whose color to set."`
+	Body     struct {
+		Color string `json:"color" doc:"The new color as a hex string (e.g. #ff7a00 or ff7a00). Empty clears it."`
+	}
+}) (*singleBody[user.User], error) {
+	a, err := authFromCtx(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	color := strings.TrimSpace(in.Body.Color)
+	if color != "" && !hexColorPattern.MatchString(color) {
+		return nil, huma.Error400BadRequest("color must be a hex color like #ff7a00")
+	}
+
+	s := db.NewSession()
+	defer s.Close()
+
+	tm := &models.TeamMember{TeamID: in.TeamID, Username: in.Username}
+	isAdmin, err := tm.IsAdmin(s, a)
+	if err != nil {
+		_ = s.Rollback()
+		return nil, translateDomainError(err)
+	}
+	if !isAdmin {
+		_ = s.Rollback()
+		return nil, huma.Error403Forbidden("forbidden")
+	}
+
+	updatedUser, err := tm.SetMemberColor(s, color)
+	if err != nil {
+		_ = s.Rollback()
+		return nil, translateDomainError(err)
+	}
+
+	if err := s.Commit(); err != nil {
+		return nil, translateDomainError(err)
+	}
+
+	return &singleBody[user.User]{Body: updatedUser}, nil
 }

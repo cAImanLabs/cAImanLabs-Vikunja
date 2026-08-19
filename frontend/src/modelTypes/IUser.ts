@@ -25,4 +25,7 @@ export interface IUser extends IAbstract {
 	deletionScheduledAt: string | Date | null
 	isAdmin?: boolean
 	botOwnerId?: number
+	// Hex color shown on tasks assigned to this user. Set by a team admin via
+	// the team member endpoints; empty/undefined means no color.
+	color?: string
 }

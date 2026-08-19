@@ -9,6 +9,7 @@
 			class="task loader-container single-task"
 			tabindex="-1"
 			:data-is-overdue="isOverdue || undefined"
+			:style="{'--assignee-tint': assigneeBackgroundColor}"
 			@click="openTaskDetail"
 			@keyup.enter="openTaskDetail"
 		>
@@ -93,6 +94,12 @@
 					<Icon icon="layer-group" />
 					{{ sprintTitle }}
 				</span>
+
+				<TaskKindLabel
+					v-if="task.kind !== TASK_KINDS.TASK"
+					:kind="task.kind"
+					class="mis-1"
+				/>
 
 				<AssigneeList
 					v-if="task.assignees.length > 0"
@@ -223,6 +230,7 @@ import TaskModel, {getHexColor} from '@/models/task'
 import type {ITask} from '@/modelTypes/ITask'
 
 import PriorityLabel from '@/components/tasks/partials/PriorityLabel.vue'
+import TaskKindLabel from '@/components/tasks/partials/TaskKindLabel.vue'
 import Labels from '@/components/tasks/partials/Labels.vue'
 import TaskGlanceTooltip from '@/components/tasks/partials/TaskGlanceTooltip.vue'
 import DeferTask from '@/components/tasks/partials/DeferTask.vue'
@@ -238,6 +246,8 @@ import Popup from '@/components/misc/Popup.vue'
 import TaskService from '@/services/task'
 
 import {formatDisplayDate, formatISO, formatDateLong} from '@/helpers/time/formatDate'
+import {getAssigneeBackgroundColor} from '@/helpers/color/assigneeBackgroundColor'
+import {TASK_KINDS} from '@/modelTypes/ITaskKind'
 import {success} from '@/message'
 
 import {useProjectStore} from '@/stores/projects'
@@ -303,6 +313,8 @@ const sprintStore = useSprintStore()
 
 const project = computed(() => projectStore.projects[task.value.projectId])
 const projectColor = computed(() => project.value ? project.value?.hexColor : '')
+
+const assigneeBackgroundColor = computed(() => getAssigneeBackgroundColor(task.value.assignees))
 
 const sprintTitle = computed(() => sprintStore.getSprintById(task.value.sprintId)?.title)
 watch(() => task.value.sprintId, sprintId => {
@@ -444,9 +456,10 @@ defineExpose({
 	cursor: pointer;
 	border-radius: $radius;
 	border: 2px solid transparent;
+	background-color: var(--assignee-tint, transparent);
 
 	&:hover {
-		background-color: var(--grey-100);
+		background-color: var(--assignee-tint, var(--grey-100));
 	}
 
 	&:has(*:focus-visible), &:focus {

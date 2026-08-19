@@ -134,6 +134,39 @@ func (tm *TeamMember) MembershipExists(s *xorm.Session) (exists bool, err error)
 		Exist(&TeamMember{})
 }
 
+// SetMemberColor sets the global color of the member identified by
+// tm.Username. The color is stored on the user, not the team membership -
+// it is shown wherever that user is assigned, not just within this team.
+// The caller must already be verified as an admin of tm.TeamID (see
+// TeamMember.IsAdmin) - this only performs the write.
+func (tm *TeamMember) SetMemberColor(s *xorm.Session, color string) (updatedUser *user2.User, err error) {
+	member, err := user2.GetUserByUsername(s, tm.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	isMember, err := s.
+		Where("team_id = ? AND user_id = ?", tm.TeamID, member.ID).
+		Exist(&TeamMember{})
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrUserIsNotMemberOfTeam{TeamID: tm.TeamID, UserID: member.ID}
+	}
+
+	member.Color = color
+	_, err = s.
+		ID(member.ID).
+		Cols("color").
+		Update(member)
+	if err != nil {
+		return nil, err
+	}
+
+	return member, nil
+}
+
 // Update toggles a team member's admin status
 // @Summary Toggle a team member's admin status
 // @Description If a user is team admin, this will make them member and vise-versa.

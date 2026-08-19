@@ -164,6 +164,27 @@
 							appear
 						>
 							<div
+								v-if="activeFields.kind"
+								class="column"
+							>
+								<!-- Kind -->
+								<div class="detail-title">
+									<Icon icon="tags" />
+									{{ $t('task.attributes.kind') }}
+								</div>
+								<TaskKindSelect
+									:ref="e => setFieldRef('kind', e)"
+									v-model="task.kind"
+									:disabled="!canWrite"
+									@update:modelValue="saveTask()"
+								/>
+							</div>
+						</CustomTransition>
+						<CustomTransition
+							name="flash-background"
+							appear
+						>
+							<div
 								v-if="activeFields.dueDate"
 								class="column"
 							>
@@ -591,6 +612,13 @@
 							{{ $t('task.detail.actions.sprint') }}
 						</XButton>
 						<XButton
+							variant="secondary"
+							icon="tags"
+							@click="setFieldActive('kind')"
+						>
+							{{ $t('task.detail.actions.kind') }}
+						</XButton>
+						<XButton
 							v-shortcut="'KeyM'"
 							variant="secondary"
 							icon="list"
@@ -723,6 +751,7 @@ import type {IAttachment} from '@/modelTypes/IAttachment'
 import type {IProject} from '@/modelTypes/IProject'
 
 import {PRIORITIES, type Priority} from '@/constants/priorities'
+import {TASK_KINDS} from '@/modelTypes/ITaskKind'
 import {PERMISSIONS} from '@/constants/permissions'
 import {PRO_FEATURE} from '@/constants/proFeatures'
 
@@ -743,6 +772,7 @@ import Heading from '@/components/tasks/partials/Heading.vue'
 import ProjectSearch from '@/components/tasks/partials/ProjectSearch.vue'
 import PercentDoneSelect from '@/components/tasks/partials/PercentDoneSelect.vue'
 import StoryPointsSelect from '@/components/tasks/partials/StoryPointsSelect.vue'
+import TaskKindSelect from '@/components/tasks/partials/TaskKindSelect.vue'
 import SprintSelect from '@/components/tasks/partials/SprintSelect.vue'
 import PrioritySelect from '@/components/tasks/partials/PrioritySelect.vue'
 import RelatedTasks from '@/components/tasks/partials/RelatedTasks.vue'
@@ -1065,6 +1095,7 @@ type FieldType =
 	| 'timeTracking'
 	| 'storyPoints'
 	| 'sprint'
+	| 'kind'
 
 const activeFields: { [type in FieldType]: boolean } = reactive({
 	assignees: false,
@@ -1083,6 +1114,7 @@ const activeFields: { [type in FieldType]: boolean } = reactive({
 	timeTracking: false,
 	storyPoints: false,
 	sprint: false,
+	kind: false,
 })
 
 function setActiveFields() {
@@ -1105,6 +1137,7 @@ function setActiveFields() {
 	activeFields.startDate = task.value.startDate !== null
 	activeFields.storyPoints = task.value.storyPoints > 0
 	activeFields.sprint = task.value.sprintId > 0
+	activeFields.kind = task.value.kind !== TASK_KINDS.TASK
 }
 
 const activeFieldElements: { [id in FieldType]: HTMLElement | null } = reactive({
@@ -1124,6 +1157,7 @@ const activeFieldElements: { [id in FieldType]: HTMLElement | null } = reactive(
 	timeTracking: null,
 	storyPoints: null,
 	sprint: null,
+	kind: null,
 })
 
 function setFieldRef(name, e) {

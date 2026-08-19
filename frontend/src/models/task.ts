@@ -1,4 +1,5 @@
 import {PRIORITIES, type Priority} from '@/constants/priorities'
+import {TASK_KINDS} from '@/modelTypes/ITaskKind'
 
 import type {ITask} from '@/modelTypes/ITask'
 import type {ILabel} from '@/modelTypes/ILabel'
@@ -80,6 +81,7 @@ export default class TaskModel extends AbstractModel<ITask> implements ITask {
 	percentDone = 0
 	storyPoints = 0
 	sprintId: ITask['sprintId'] = 0
+	kind: ITask['kind'] = TASK_KINDS.TASK
 	relatedTasks:  Partial<Record<IRelationKind, ITask[]>> = {}
 	attachments: IAttachment[] = []
 	coverImageAttachmentId: IAttachment['id'] = null

@@ -143,6 +143,21 @@
 									{{ $t('team.attributes.member') }}
 								</template>
 							</td>
+							<td class="member-color">
+								<input
+									v-if="userIsAdmin"
+									type="color"
+									class="member-color-input"
+									:value="m.color || '#cccccc'"
+									:aria-label="$t('team.attributes.colorFor', {name: getDisplayName(m)})"
+									@change="(e) => updateMemberColor(m, (e.target as HTMLInputElement).value)"
+								>
+								<span
+									v-else-if="m.color"
+									class="member-color-swatch"
+									:style="{backgroundColor: m.color}"
+								/>
+							</td>
 							<td
 								v-if="userIsAdmin"
 								class="actions"
@@ -249,6 +264,7 @@ import {getDisplayName} from '@/models/user'
 import TeamService from '@/services/team'
 import TeamMemberService from '@/services/teamMember'
 import UserService from '@/services/user'
+import {useTeamMemberColorService} from '@/services/teamMemberColor'
 
 import {PERMISSIONS as Permissions} from '@/constants/permissions'
 
@@ -285,6 +301,7 @@ const sortedMembers = computed(() => {
 const teamService = ref<TeamService>(new TeamService())
 const teamMemberService = ref<TeamMemberService>(new TeamMemberService())
 const userService = ref<UserService>(new UserService())
+const teamMemberColorService = useTeamMemberColorService()
 
 const team = ref<ITeam>()
 const teamId = computed(() => Number(route.params.id))
@@ -371,6 +388,17 @@ async function toggleUserType(member: ITeamMember) {
 	})
 }
 
+async function updateMemberColor(member: ITeamMember, color: string) {
+	const updatedUser = await teamMemberColorService.setColor(teamId.value, member.username, color)
+	for (const tm of team.value.members) {
+		if (tm.id === member.id) {
+			tm.color = updatedUser.color
+			break
+		}
+	}
+	success({message: t('team.edit.colorUpdated')})
+}
+
 async function findUser(query: string) {
 	if (query === '') {
 		foundUsers.value = []
@@ -402,5 +430,26 @@ async function leave() {
 	.content {
 		padding: 0;
 	}
+}
+
+.member-color {
+	vertical-align: middle;
+}
+
+.member-color-input {
+	inline-size: 2rem;
+	block-size: 1.5rem;
+	padding: 0;
+	border: none;
+	background: none;
+	cursor: pointer;
+}
+
+.member-color-swatch {
+	display: inline-block;
+	inline-size: 1rem;
+	block-size: 1rem;
+	border-radius: 50%;
+	vertical-align: middle;
 }
 </style>

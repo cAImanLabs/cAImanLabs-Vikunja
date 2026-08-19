@@ -636,7 +636,8 @@
       "dueToday": "Due today",
       "dueThisWeek": "Due this week",
       "highPriority": "High priority",
-      "assignedToMe": "Assigned to me"
+      "assignedToMe": "Assigned to me",
+      "assignedToPlaceholder": "Filter by assignee…"
     },
     "attributes": {
       "title": "Title",
@@ -1093,7 +1094,8 @@
         "favorite": "Add to Favorites",
         "unfavorite": "Remove from Favorites",
         "storyPoints": "Set Story Points",
-        "sprint": "Set Sprint"
+        "sprint": "Set Sprint",
+        "kind": "Set Type"
       }
     },
     "attributes": {
@@ -1120,7 +1122,8 @@
       "updated": "Updated",
       "doneAt": "Done At",
       "storyPoints": "Story Points",
-      "sprint": "Sprint"
+      "sprint": "Sprint",
+      "kind": "Type"
     },
     "subscription": {
       "subscribedTaskThroughParentProject": "You can't unsubscribe here because you are subscribed to this task through its project.",
@@ -1208,6 +1211,14 @@
       "high": "High",
       "urgent": "Urgent",
       "doNow": "DO NOW"
+    },
+    "kind": {
+      "task": "Task",
+      "epic": "Epic",
+      "story": "Story",
+      "bug": "Bug",
+      "subtask": "Sub-task",
+      "feature": "New Feature"
     },
     "relation": {
       "add": "Add a New Task Relation",
@@ -1308,6 +1319,8 @@
       "madeMember": "The team member was successfully made member.",
       "madeAdmin": "The team member was successfully made admin.",
       "mustSelectUser": "Please select a user.",
+      "colorUpdated": "The member's color was successfully updated.",
+      "colorFor": "Color for {name}",
       "delete": {
         "header": "Delete the team",
         "text1": "Are you sure you want to delete this team and all of its members?",
@@ -1335,6 +1348,7 @@
       "descriptionPlaceholder": "Describe the team here, hit '/' for more options…",
       "admin": "Admin",
       "member": "Member",
+      "color": "Color",
       "isPublic": "Public Team",
       "isPublicDescription": "Make the team publicly discoverable. When enabled, anyone can share projects with this team even when not being a direct member."
     }

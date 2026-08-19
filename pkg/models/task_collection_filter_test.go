@@ -231,6 +231,15 @@ func TestParseFilter(t *testing.T) {
 		assert.Equal(t, taskFilterComparatorNotEquals, result[0].comparator)
 		assert.Equal(t, int64(3), result[0].value)
 	})
+	t.Run("kind filter (TaskKind must stay int64 or getValueForField panics on reflect.Kind)", func(t *testing.T) {
+		result, err := getTaskFiltersFromFilterString("kind = 1", "UTC")
+
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, "kind", result[0].field)
+		assert.Equal(t, taskFilterComparatorEquals, result[0].comparator)
+		assert.Equal(t, int64(1), result[0].value)
+	})
 	t.Run("less than or equal comparator", func(t *testing.T) {
 		result, err := getTaskFiltersFromFilterString("percent_done <= 50", "UTC")
 

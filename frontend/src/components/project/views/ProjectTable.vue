@@ -38,6 +38,9 @@
 							<FancyCheckbox v-model="activeColumns.priority">
 								{{ $t('task.attributes.priority') }}
 							</FancyCheckbox>
+							<FancyCheckbox v-model="activeColumns.kind">
+								{{ $t('task.attributes.kind') }}
+							</FancyCheckbox>
 							<FancyCheckbox v-model="activeColumns.labels">
 								{{ $t('task.attributes.labels') }}
 							</FancyCheckbox>
@@ -144,6 +147,9 @@
 											@click="sort('priority', $event)"
 										/>
 									</th>
+									<th v-if="activeColumns.kind">
+										{{ $t('task.attributes.kind') }}
+									</th>
 									<th v-if="activeColumns.labels">
 										{{ $t('task.attributes.labels') }}
 									</th>
@@ -239,6 +245,7 @@
 								<tr
 									v-for="t in tasks"
 									:key="t.id"
+									:style="{'--assignee-tint': getAssigneeBackgroundColor(t.assignees)}"
 								>
 									<td v-if="activeColumns.index">
 										<RouterLink :to="taskDetailRoutes[t.id]">
@@ -277,6 +284,9 @@
 											:done="t.done"
 											:show-all="true"
 										/>
+									</td>
+									<td v-if="activeColumns.kind">
+										<TaskKindLabel :kind="t.kind" />
 									</td>
 									<td v-if="activeColumns.labels">
 										<Labels :labels="t.labels" />
@@ -369,7 +379,9 @@ import AssigneeList from '@/components/tasks/partials/AssigneeList.vue'
 import type {IProjectView} from '@/modelTypes/IProjectView'
 import { camelCase } from 'change-case'
 import {isSavedFilter} from '@/services/savedFilter'
+import {getAssigneeBackgroundColor} from '@/helpers/color/assigneeBackgroundColor'
 import {useProjectStore} from '@/stores/projects'
+import TaskKindLabel from '@/components/tasks/partials/TaskKindLabel.vue'
 
 const props = defineProps<{
 	isLoadingProject: boolean,
@@ -385,6 +397,7 @@ const ACTIVE_COLUMNS_DEFAULT = {
 	project: false,
 	title: true,
 	priority: false,
+	kind: false,
 	labels: true,
 	assignees: true,
 	dueDate: true,
@@ -497,6 +510,10 @@ const taskDetailRoutes = computed(() => Object.fromEntries(
 
 	.user {
 		margin: 0;
+	}
+
+	tbody tr {
+		background-color: var(--assignee-tint, transparent);
 	}
 }
 

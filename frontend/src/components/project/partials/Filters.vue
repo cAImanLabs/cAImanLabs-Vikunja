@@ -17,6 +17,25 @@
 			>
 				{{ qf.label }}
 			</XButton>
+			<Multiselect
+				class="assignee-quick-filter"
+				:model-value="assigneeQuickFilterValue"
+				:placeholder="$t('filters.quick.assignedToPlaceholder')"
+				:search-results="foundAssignees"
+				:show-empty="true"
+				label="name"
+				:autocomplete-enabled="false"
+				@search="findAssignee"
+				@select="applyAssigneeQuickFilter"
+			>
+				<template #searchResult="{option: user}">
+					<User
+						:avatar-size="24"
+						:show-username="true"
+						:user="user"
+					/>
+				</template>
+			</Multiselect>
 		</div>
 
 		<FilterInput
@@ -83,6 +102,12 @@ import {
 } from '@/helpers/filters'
 import FilterInputDocs from '@/components/input/filter/FilterInputDocs.vue'
 import FilterInput from '@/components/input/filter/FilterInput.vue'
+import Multiselect from '@/components/input/Multiselect.vue'
+import User from '@/components/misc/User.vue'
+import ProjectUserService from '@/services/projectUsers'
+import UserService from '@/services/user'
+import type {IUser} from '@/modelTypes/IUser'
+import {getDisplayName} from '@/models/user'
 
 const props = withDefaults(defineProps<{
 	modelValue: TaskFilterParams,
@@ -239,6 +264,28 @@ function applyQuickFilter(query: string) {
 	emit('showResults')
 }
 
+const foundAssignees = ref<IUser[]>([])
+const assigneeQuickFilterValue = ref<IUser | null>(null)
+const projectUserService = new ProjectUserService()
+const userService = new UserService()
+
+async function findAssignee(query = '') {
+	const response = projectId.value
+		// @ts-expect-error - projectId is used for URL replacement but not part of IAbstract
+		? await projectUserService.getAll({projectId: projectId.value}, {s: query}) as IUser[]
+		: await userService.getAll({} as IUser, {s: query}) as IUser[]
+
+	foundAssignees.value = response.map(u => {
+		u.name = getDisplayName(u)
+		return u
+	})
+}
+
+function applyAssigneeQuickFilter(user: IUser) {
+	assigneeQuickFilterValue.value = user
+	applyQuickFilter(`assignees in ${user.username}`)
+}
+
 function focusFilterInput() {
 	filterInputRef.value?.focus()
 }
@@ -253,5 +300,9 @@ defineExpose({
 	display: flex;
 	flex-wrap: wrap;
 	gap: .5rem;
+
+	.assignee-quick-filter {
+		max-inline-size: 220px;
+	}
 }
 </style>

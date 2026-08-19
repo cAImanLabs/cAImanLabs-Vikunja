@@ -82,6 +82,10 @@
 				:value="task.percentDone * 100"
 			/>
 			<div class="footer">
+				<TaskKindLabel
+					v-if="task.kind !== TASK_KINDS.TASK"
+					:kind="task.kind"
+				/>
 				<Labels :labels="task.labels" />
 				<PriorityLabel
 					:priority="task.priority"
@@ -133,6 +137,8 @@ import {useRouter} from 'vue-router'
 import {useGlobalNow} from '@/composables/useGlobalNow'
 
 import PriorityLabel from '@/components/tasks/partials/PriorityLabel.vue'
+import TaskKindLabel from '@/components/tasks/partials/TaskKindLabel.vue'
+import {TASK_KINDS} from '@/modelTypes/ITaskKind'
 import ProgressBar from '@/components/misc/ProgressBar.vue'
 import Done from '@/components/misc/Done.vue'
 import Labels from '@/components/tasks/partials/Labels.vue'
@@ -147,6 +153,7 @@ import AttachmentService, {PREVIEW_SIZE} from '@/services/attachment'
 
 import {formatDateLong, formatDisplayDate, formatISO} from '@/helpers/time/formatDate'
 import {colorIsDark} from '@/helpers/color/colorIsDark'
+import {getFirstAssigneeColor} from '@/helpers/color/assigneeBackgroundColor'
 import {useTaskStore} from '@/stores/tasks'
 import AssigneeList from '@/components/tasks/partials/AssigneeList.vue'
 import {playPopSound} from '@/helpers/playPop'
@@ -170,7 +177,9 @@ const router = useRouter()
 
 const loadingInternal = ref(false)
 
-const color = computed(() => getHexColor(props.task.hexColor))
+// An explicit task color wins; otherwise fall back to the first assignee's
+// color, if any, so the card still gets the same full-saturation treatment.
+const color = computed(() => getHexColor(props.task.hexColor) || getFirstAssigneeColor(props.task.assignees))
 
 const projectStore = useProjectStore()
 

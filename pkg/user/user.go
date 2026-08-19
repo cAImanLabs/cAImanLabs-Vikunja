@@ -102,6 +102,9 @@ type User struct {
 	AvatarProvider string `xorm:"varchar(255) null" json:"-"`
 	AvatarFileID   int64  `xorm:"null" json:"-"`
 
+	// The color associated with this user, shown as a background tint on tasks assigned to them. Hex format (e.g. #ff7a00). Empty means no color. Only a team admin can set this, via the team member management endpoints - it cannot be changed through the regular user settings update.
+	Color string `xorm:"varchar(7) null" json:"color,omitempty" valid:"length(0|7)" maxLength:"7" readOnly:"true" doc:"The color associated with this user, shown as a background tint on tasks assigned to them. Hex format (e.g. #ff7a00). Set by a team admin via the team member endpoints, not through regular user settings."`
+
 	// Issuer and Subject contain the issuer and subject from the source the user authenticated with.
 	Issuer  string `xorm:"text null" json:"-"`
 	Subject string `xorm:"text null" json:"-"`

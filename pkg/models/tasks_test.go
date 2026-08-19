@@ -247,6 +247,28 @@ func TestTask_Update(t *testing.T) {
 			"sprint_id":    1,
 		}, false)
 	})
+	t.Run("kind is persisted", func(t *testing.T) {
+		// Same allowlist gotcha as story points/sprint above, for the newer kind column.
+		db.LoadAndAssertFixtures(t)
+		s := db.NewSession()
+		defer s.Close()
+
+		task := &Task{
+			ID:        1,
+			Title:     "test10000",
+			ProjectID: 1,
+			Kind:      TaskKindBug,
+		}
+		err := task.Update(s, u)
+		require.NoError(t, err)
+		err = s.Commit()
+		require.NoError(t, err)
+
+		db.AssertExists(t, "tasks", map[string]interface{}{
+			"id":   1,
+			"kind": TaskKindBug,
+		}, false)
+	})
 	t.Run("default bucket when moving a task between projects", func(t *testing.T) {
 		db.LoadAndAssertFixtures(t)
 		s := db.NewSession()

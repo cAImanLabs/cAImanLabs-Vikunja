@@ -254,4 +254,56 @@ func TestHumaTeamMember(t *testing.T) {
 			})
 		})
 	})
+
+	t.Run("SetColor", func(t *testing.T) {
+		t.Run("Normal", func(t *testing.T) {
+			e, err := setupTestEnv()
+			require.NoError(t, err)
+			token := humaTokenFor(t, &testuser1) // admin of team 1
+
+			rec := humaRequest(t, e, http.MethodPut, "/api/v2/teams/1/members/user2/color", `{"color":"#ff7a00"}`, token, "")
+			require.Equal(t, http.StatusOK, rec.Code, "body: %s", rec.Body.String())
+			assert.Contains(t, rec.Body.String(), `"color":"#ff7a00"`)
+			db.AssertExists(t, "users", map[string]interface{}{
+				"id":    2,
+				"color": "#ff7a00",
+			}, false)
+		})
+		t.Run("Invalid color", func(t *testing.T) {
+			e, err := setupTestEnv()
+			require.NoError(t, err)
+			token := humaTokenFor(t, &testuser1)
+
+			rec := humaRequest(t, e, http.MethodPut, "/api/v2/teams/1/members/user2/color", `{"color":"not-a-color"}`, token, "")
+			require.Equal(t, http.StatusBadRequest, rec.Code, "body: %s", rec.Body.String())
+		})
+		t.Run("Target not a member of this team", func(t *testing.T) {
+			e, err := setupTestEnv()
+			require.NoError(t, err)
+			token := humaTokenFor(t, &testuser1) // admin of team 1; user3 is not a member of team 1
+
+			rec := humaRequest(t, e, http.MethodPut, "/api/v2/teams/1/members/user3/color", `{"color":"#ff7a00"}`, token, "")
+			require.Equal(t, http.StatusBadRequest, rec.Code, "body: %s", rec.Body.String())
+		})
+		t.Run("Permissions check", func(t *testing.T) {
+			// A non-admin member cannot set another member's color.
+			t.Run("Forbidden non-admin member", func(t *testing.T) {
+				e, err := setupTestEnv()
+				require.NoError(t, err)
+				token := humaTokenFor(t, &testuser2) // non-admin member of team 1
+
+				rec := humaRequest(t, e, http.MethodPut, "/api/v2/teams/1/members/user1/color", `{"color":"#ff7a00"}`, token, "")
+				require.Equal(t, http.StatusForbidden, rec.Code, "body: %s", rec.Body.String())
+			})
+			// A non-member is forbidden (team 9, user1 not a member).
+			t.Run("Forbidden non-member", func(t *testing.T) {
+				e, err := setupTestEnv()
+				require.NoError(t, err)
+				token := humaTokenFor(t, &testuser1)
+
+				rec := humaRequest(t, e, http.MethodPut, "/api/v2/teams/9/members/user2/color", `{"color":"#ff7a00"}`, token, "")
+				require.Equal(t, http.StatusForbidden, rec.Code, "body: %s", rec.Body.String())
+			})
+		})
+	})
 }

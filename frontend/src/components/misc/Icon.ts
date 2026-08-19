@@ -17,6 +17,8 @@ import {
 	faBars,
 	faBell,
 	faBolt,
+	faBookmark,
+	faBug,
 	faCalendar,
 	faChartLine,
 	faCheck,
@@ -203,6 +205,8 @@ library.add(faArrowUpShortWide)
 library.add(faX)
 library.add(faAnglesUp)
 library.add(faBolt)
+library.add(faBookmark)
+library.add(faBug)
 library.add(faArrowTurnDown)
 library.add(faListCheck)
 library.add(faXmark)

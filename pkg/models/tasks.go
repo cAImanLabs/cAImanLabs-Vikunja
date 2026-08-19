@@ -110,6 +110,8 @@ type Task struct {
 	StoryPoints int `xorm:"int null 'story_points'" json:"story_points" doc:"Story points estimation for the task."`
 	// Sprint ID this task belongs to
 	SprintID int64 `xorm:"bigint INDEX null 'sprint_id'" json:"sprint_id" doc:"The id of the sprint this task belongs to."`
+	// The kind of task this is, similar to an issue type. Can be `task`, `epic`, `story`, `bug`, `subtask` or `feature`.
+	Kind TaskKind `xorm:"not null default 0 'kind'" json:"kind" swaggertype:"string" enums:"task,epic,story,bug,subtask,feature" doc:"The kind of task this is, similar to an issue type. One of task, epic, story, bug, subtask or feature."`
 
 	// The task identifier, based on the project identifier and the task's index
 	Identifier string `xorm:"-" json:"identifier" readOnly:"true" doc:"The textual task identifier, derived from the project identifier and the task index (e.g. \"PROJ-12\")."`
@@ -1301,6 +1303,7 @@ func (t *Task) updateSingleTask(s *xorm.Session, a web.Auth, fields []string) (e
 		"cover_image_attachment_id",
 		"story_points",
 		"sprint_id",
+		"kind",
 	}
 
 	// Validate fields if provided

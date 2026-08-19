@@ -1629,6 +1629,30 @@ func (err ErrCannotRemoveUserFromExternalTeam) HTTPError() web.HTTPError {
 	}
 }
 
+// ErrUserIsNotMemberOfTeam represents an error where a user is not a member of a team.
+type ErrUserIsNotMemberOfTeam struct {
+	TeamID int64
+	UserID int64
+}
+
+// IsErrUserIsNotMemberOfTeam checks if an error is ErrUserIsNotMemberOfTeam.
+func IsErrUserIsNotMemberOfTeam(err error) bool {
+	_, ok := err.(ErrUserIsNotMemberOfTeam)
+	return ok
+}
+
+func (err ErrUserIsNotMemberOfTeam) Error() string {
+	return fmt.Sprintf("User is not a member of team [Team ID: %d, User ID: %d]", err.TeamID, err.UserID)
+}
+
+// ErrCodeUserIsNotMemberOfTeam holds the unique world-error code of this error
+const ErrCodeUserIsNotMemberOfTeam = 6011
+
+// HTTPError holds the http error description
+func (err ErrUserIsNotMemberOfTeam) HTTPError() web.HTTPError {
+	return web.HTTPError{HTTPCode: http.StatusBadRequest, Code: ErrCodeUserIsNotMemberOfTeam, Message: "This user is not a member of that team."}
+}
+
 // ====================
 // User <-> Project errors
 // ====================
