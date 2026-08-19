@@ -1,4 +1,4 @@
-<img src="cAImanlabsLogo.png" alt="" style="display: block;width: 25%;margin: 0 auto;" width="25%"/>
+<img src="cAImanDeskLogo.png" alt="" style="display: block;width: 25%;margin: 0 auto;" width="25%"/>
 
 [![License: AGPL-3.0-or-later](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg)](LICENSE)
 
