@@ -18,7 +18,7 @@ defineProps<{
 }>()
 
 const KIND_ICONS = {
-	[TASK_KINDS.TASK]: 'check-square',
+	[TASK_KINDS.TASK]: 'tasks',
 	[TASK_KINDS.EPIC]: 'bolt',
 	[TASK_KINDS.STORY]: 'bookmark',
 	[TASK_KINDS.BUG]: 'bug',

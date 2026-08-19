@@ -94,7 +94,6 @@ import {
 import {
 	faBellSlash,
 	faCalendarAlt,
-	faCheckSquare,
 	faClock,
 	faComments,
 	faSave,
@@ -120,7 +119,6 @@ library.add(faTable)
 library.add(faFile)
 library.add(faFileImage)
 library.add(faFilePdf)
-library.add(faCheckSquare)
 library.add(faStrikethrough)
 library.add(faCode)
 library.add(faQuoteRight)

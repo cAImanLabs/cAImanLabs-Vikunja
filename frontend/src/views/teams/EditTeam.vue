@@ -149,7 +149,7 @@
 									type="color"
 									class="member-color-input"
 									:value="m.color || '#cccccc'"
-									:aria-label="$t('team.attributes.colorFor', {name: getDisplayName(m)})"
+									:aria-label="$t('team.edit.colorFor', {name: getDisplayName(m)})"
 									@change="(e) => updateMemberColor(m, (e.target as HTMLInputElement).value)"
 								>
 								<span
