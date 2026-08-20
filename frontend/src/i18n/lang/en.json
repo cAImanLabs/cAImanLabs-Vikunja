@@ -935,7 +935,8 @@
       "createPlaceholder": "Create",
       "selectPlaceholder": "Click or press enter to select",
       "removeItem": "Remove this item",
-      "clear": "Clear selection"
+      "clear": "Clear selection",
+      "noResults": "No results found"
     },
     "datepickerRange": {
       "to": "To",

@@ -1,6 +1,6 @@
 <template>
 	<div class="heading">
-		<div class="tw:flex tw:items-center md:tw:items-stretch tw:flex-col tw:gap-1 task-properties">
+		<div class="tw:flex tw:items-center tw:flex-wrap tw:gap-2 task-properties">
 			<div class="tw:flex tw:items-center tw:gap-2">
 				<ColorBubble
 					v-if="task.hexColor !== ''"
@@ -223,6 +223,9 @@ async function cancel(element: HTMLInputElement) {
 	// 1.8rem is the font-size, 1.125 is the line-height, .3rem padding everywhere, 1px border around the whole thing.
 	min-block-size: calc(1.8rem * 1.125 + .6rem + 2px);
 	margin-inline-end: 0;
+	// Flex items default to min-inline-size: auto, which blocks shrinking below
+	// content size and pushes the sibling badges out instead of wrapping the title.
+	min-inline-size: 0;
 
 	@media screen and (max-width: $tablet) {
 		margin: 0 -.3rem .5rem; // the title has 0.3rem padding - this make the text inside of it align with the rest
@@ -265,6 +268,11 @@ async function cancel(element: HTMLInputElement) {
 }
 
 .task-properties {
+	// Without this, the metadata badges (kind/priority) get squeezed by the
+	// title's flex-shrink tug-of-war and wrap onto their own lines even when
+	// there's ample width - the title should be the one that wraps, not these.
+	flex-shrink: 0;
+
 	@media screen and (max-width: $tablet) {
 		flex-direction: row;
 	}

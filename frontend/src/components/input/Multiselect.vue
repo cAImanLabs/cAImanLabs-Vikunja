@@ -150,6 +150,15 @@
 				>
 					{{ creationDisabledMessage }}
 				</div>
+
+				<div
+					v-if="noResultsVisible"
+					class="search-result-hint"
+					role="option"
+					aria-disabled="true"
+				>
+					{{ $t('input.multiselect.noResults') }}
+				</div>
 			</div>
 		</CustomTransition>
 	</div>
@@ -284,12 +293,18 @@ const searchResultsVisible = computed(() => {
 		return false
 	}
 
-	return showSearchResults.value && (
-		(filteredSearchResults.value.length > 0) ||
-		(props.creatable && query.value !== '') ||
-		creationHintVisible.value
-	)
+	return showSearchResults.value
 })
+
+// Shown instead of a blank panel when the search legitimately found nothing -
+// without this, an open-but-empty dropdown looks broken/unresponsive. Suppressed
+// while loading so it doesn't flash before async results have arrived.
+const noResultsVisible = computed(() => searchResultsVisible.value &&
+	filteredSearchResults.value.length === 0 &&
+	!creatableAvailable.value &&
+	!creationHintVisible.value &&
+	!props.loading && !localLoading.value,
+)
 
 const queryHasExactMatch = computed(() => {
 	const hasResult = filteredSearchResults.value.some((elem: T) => elementInResults(elem, props.label, query.value as string))
@@ -529,7 +544,21 @@ function remove(item: T) {
 
 function focus() {
 	searchInput.value?.focus()
+	// Opens the dropdown directly rather than waiting on the input's own 'focus'
+	// event to cascade through handleFocus - callers of this method (see below)
+	// want the field usable immediately, not dependent on a native event round-trip.
+	showSearchResults.value = true
 }
+
+// Callers (e.g. TaskDetailView's field-toggle buttons) resolve this component to its
+// root element and call .focus() on it directly, rather than going through the @focus
+// listener below - overriding the native method here means that always reaches the
+// actual search input instead of depending on a 'focus' event round-trip on the div.
+onMounted(() => {
+	if (multiselectRoot.value) {
+		multiselectRoot.value.focus = focus
+	}
+})
 </script>
 
 <style lang="scss" scoped>
@@ -683,6 +712,15 @@ function focus() {
 	color: transparent;
 	transition: color $transition;
 	padding-inline-start: .5rem;
+	// This is a hover-only decoration - it must never win space over the actual
+	// option label, which is what happened before: its full text width was
+	// claimed up front, squeezing the label (flex-basis 0) down to nothing in
+	// narrow columns.
+	flex: 0 1 auto;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	max-inline-size: 40%;
 
 	&.is-always-visible {
 		color: var(--grey-500);

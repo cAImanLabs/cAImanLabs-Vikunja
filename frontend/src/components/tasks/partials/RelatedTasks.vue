@@ -45,6 +45,7 @@
 						:placeholder="$t('task.relation.searchPlaceholder')"
 						:loading="taskService.loading"
 						:search-results="mappedFoundTasks"
+						:show-empty="true"
 						label="title"
 						:creatable="true"
 						:create-placeholder="$t('task.relation.createPlaceholder')"
@@ -52,9 +53,9 @@
 						@create="createAndRelateTask"
 					>
 						<template #searchResult="{option: task}">
-							<span 
+							<span
 								v-if="typeof task !== 'string'"
-								class="search-result"
+								class="search-result task-search-result"
 								:class="{'is-strikethrough': task.done}"
 							>
 								<span
@@ -68,7 +69,16 @@
 										{{ task.differentProject }} >
 									</span>
 								</span>
-								{{ task.title }}
+								<span class="task-search-result-title">{{ task.title }}</span>
+								<PriorityLabel
+									:priority="(task as unknown as ITask).priority"
+									:done="(task as unknown as ITask).done"
+								/>
+								<TaskKindLabel
+									v-if="(task as unknown as ITask).kind !== TASK_KINDS.TASK"
+									:kind="(task as unknown as ITask).kind"
+								/>
+								<StoryPointsLabel :points="(task as unknown as ITask).storyPoints" />
 							</span>
 							<span
 								v-else
@@ -147,6 +157,20 @@
 							</span>
 							{{ task.title }}
 						</RouterLink>
+						<PriorityLabel
+							:priority="task.priority"
+							:done="task.done"
+							class="mis-1"
+						/>
+						<TaskKindLabel
+							v-if="task.kind !== TASK_KINDS.TASK"
+							:kind="task.kind"
+							class="mis-1"
+						/>
+						<StoryPointsLabel
+							:points="task.storyPoints"
+							class="mis-1"
+						/>
 					</div>
 					<BaseButton
 						v-if="editEnabled"
@@ -207,6 +231,10 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import Multiselect from '@/components/input/Multiselect.vue'
 import FancyCheckbox from '@/components/input/FancyCheckbox.vue'
 import QuickAddMagic from '@/components/tasks/partials/QuickAddMagic.vue'
+import PriorityLabel from '@/components/tasks/partials/PriorityLabel.vue'
+import TaskKindLabel from '@/components/tasks/partials/TaskKindLabel.vue'
+import StoryPointsLabel from '@/components/tasks/partials/StoryPointsLabel.vue'
+import {TASK_KINDS} from '@/modelTypes/ITaskKind'
 
 import {error, success} from '@/message'
 import {useTaskStore} from '@/stores/tasks'
@@ -256,14 +284,27 @@ const showCreate = computed(() => Object.keys(relatedTasks.value).length === 0 |
 const query = ref('')
 const foundTasks = ref<ITask[]>([])
 
+// Pre-loads the project's tasks so the picker behaves like a browsable dropdown
+// as soon as it's shown, instead of staying empty until the user types.
+watch(showCreate, visible => {
+	if (visible) {
+		findTasks('')
+	}
+}, {immediate: true})
+
 async function findTasks(newQuery: string) {
 	query.value = newQuery
 	const result = await taskService.getAll({}, {
 		s: newQuery,
 		sort_by: 'done',
 	})
-	
-	foundTasks.value = mapRelatedTasks(result)
+
+	// An empty query browses the current project's tasks (so the field behaves
+	// like a real dropdown); a typed query searches across every accessible
+	// project, since relations can legitimately point outside the project.
+	foundTasks.value = mapRelatedTasks(
+		newQuery === '' ? result.filter(task => task.projectId === props.projectId) : result,
+	)
 }
 
 function mapRelatedTasks(tasks: ITask[]) {
@@ -412,6 +453,18 @@ async function toggleTaskDone(task: ITask) {
 .different-project {
 	color: var(--grey-500);
 	inline-size: auto;
+}
+
+.task-search-result {
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
+	flex-wrap: wrap;
+}
+
+.task-search-result-title {
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .title {

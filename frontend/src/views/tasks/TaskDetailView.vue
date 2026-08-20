@@ -1490,6 +1490,14 @@ h2 .button {
 	flex-flow: row wrap;
 	margin-block-end: 0;
 
+	// Bulma's .column has no min-width, so with several fields active it keeps
+	// shrinking instead of wrapping - forcing a floor makes wrapping kick in
+	// once a row can't comfortably fit the next field, instead of every field
+	// getting squeezed into an unusably narrow sliver.
+	.column {
+		min-inline-size: 9rem;
+	}
+
 	.detail-title {
 		display: block;
 		color: var(--grey-400);
