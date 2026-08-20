@@ -1,31 +1,22 @@
 <template>
 	<span
-		:class="`kind-${kind}`"
 		class="task-kind-label"
+		:style="{color: TASK_KIND_COLORS[kind]}"
 	>
 		<span class="icon">
-			<Icon :icon="KIND_ICONS[kind]" />
+			<Icon :icon="TASK_KIND_ICONS[kind]" />
 		</span>
-		<span>{{ $t(`task.kind.${kind}`) }}</span>
+		<span>{{ $t(TASK_KIND_I18N_KEYS[kind]) }}</span>
 	</span>
 </template>
 
 <script setup lang="ts">
-import {TASK_KINDS, type TaskKind} from '@/modelTypes/ITaskKind'
+import type {TaskKind} from '@/modelTypes/ITaskKind'
+import {TASK_KIND_ICONS, TASK_KIND_COLORS, TASK_KIND_I18N_KEYS} from '@/helpers/taskKindMeta'
 
 defineProps<{
 	kind: TaskKind,
 }>()
-
-const KIND_ICONS = {
-	[TASK_KINDS.TASK]: 'tasks',
-	[TASK_KINDS.EPIC]: 'bolt',
-	[TASK_KINDS.STORY]: 'bookmark',
-	[TASK_KINDS.BUG]: 'bug',
-	[TASK_KINDS.SUBTASK]: 'arrow-turn-down',
-	[TASK_KINDS.FEATURE]: 'layer-group',
-	[TASK_KINDS.INITIATIVE]: 'bullseye',
-} as const satisfies Record<TaskKind, string>
 </script>
 
 <style lang="scss" scoped>
@@ -38,34 +29,6 @@ const KIND_ICONS = {
 
 	.icon {
 		inline-size: auto !important;
-	}
-
-	&.kind-task {
-		color: var(--grey-500);
-	}
-
-	&.kind-epic {
-		color: var(--primary);
-	}
-
-	&.kind-story {
-		color: var(--success);
-	}
-
-	&.kind-bug {
-		color: var(--danger-text);
-	}
-
-	&.kind-subtask {
-		color: var(--grey-500);
-	}
-
-	&.kind-feature {
-		color: var(--info);
-	}
-
-	&.kind-initiative {
-		color: var(--link-visited);
 	}
 }
 </style>

@@ -8,7 +8,7 @@
 			:class="{'is-loading': taskService.loading}"
 			class="task loader-container single-task"
 			tabindex="-1"
-			:data-is-overdue="isOverdue || undefined"
+			:data-due-urgency="dueDateUrgency || undefined"
 			:style="{'--assignee-tint': assigneeBackgroundColor}"
 			@click="openTaskDetail"
 			@keyup.enter="openTaskDetail"
@@ -54,12 +54,6 @@
 						class="mie-1"
 					/>
 	
-					<PriorityLabel
-						:priority="task.priority"
-						:done="task.done"
-						class="pis-2 mie-1"
-					/>
-
 					<TaskGlanceTooltip :task="task">
 						<RouterLink
 							ref="taskLinkRef"
@@ -69,6 +63,12 @@
 							{{ task.title }}
 						</RouterLink>
 					</TaskGlanceTooltip>
+
+					<PriorityLabel
+						:priority="task.priority"
+						:done="task.done"
+						class="pis-2 mie-1"
+					/>
 				</span>
 
 				<Labels
@@ -255,6 +255,7 @@ import {playPopSound} from '@/helpers/playPop'
 import {isEditorContentEmpty} from '@/helpers/editorContentEmpty'
 import {TASK_REPEAT_MODES} from '@/types/IRepeatMode'
 import {useGlobalNow} from '@/composables/useGlobalNow'
+import {getDueDateUrgency} from '@/helpers/time/dueDateUrgency'
 
 const props = withDefaults(defineProps<{
 	theTask: ITask,
@@ -351,12 +352,7 @@ onMounted(updateDueDate)
 watch(() => task.value.dueDate, updateDueDate)
 
 const {now} = useGlobalNow()
-const isOverdue = computed(() => (
-	!task.value.done &&
-	task.value.dueDate !== null &&
-	task.value.dueDate.getTime() > 0 &&
-	task.value.dueDate.getTime() <= now.value.getTime()
-))
+const dueDateUrgency = computed(() => getDueDateUrgency(task.value.dueDate, task.value.done, now.value))
 
 let oldTask
 
@@ -504,8 +500,20 @@ defineExpose({
 		}
 	}
 
-	&[data-is-overdue] .dueDate {
+	// Color grading by urgency: red once overdue, then two lighter warning
+	// shades as the due date approaches - matches the task detail view.
+	&[data-due-urgency='overdue'] .dueDate {
 		color: var(--danger-text);
+		font-weight: bold;
+	}
+
+	&[data-due-urgency='today'] .dueDate {
+		color: var(--warning-dark);
+		font-weight: bold;
+	}
+
+	&[data-due-urgency='soon'] .dueDate {
+		color: var(--warning-dark);
 	}
 
 	.task-project {

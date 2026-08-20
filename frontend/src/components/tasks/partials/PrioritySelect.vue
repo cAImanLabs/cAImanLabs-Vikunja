@@ -1,34 +1,17 @@
 <template>
-	<div class="select">
-		<select
-			v-model="priority"
-			:disabled="disabled || undefined"
-			:aria-label="$t('task.attributes.priority')"
-		>
-			<option :value="PRIORITIES.UNSET">
-				{{ $t('task.priority.unset') }}
-			</option>
-			<option :value="PRIORITIES.LOW">
-				{{ $t('task.priority.low') }}
-			</option>
-			<option :value="PRIORITIES.MEDIUM">
-				{{ $t('task.priority.medium') }}
-			</option>
-			<option :value="PRIORITIES.HIGH">
-				{{ $t('task.priority.high') }}
-			</option>
-			<option :value="PRIORITIES.URGENT">
-				{{ $t('task.priority.urgent') }}
-			</option>
-			<option :value="PRIORITIES.DO_NOW">
-				{{ $t('task.priority.doNow') }}
-			</option>
-		</select>
-	</div>
+	<IconSelect
+		v-model="priority"
+		:options="options"
+		:disabled="disabled"
+		:aria-label="$t('task.attributes.priority')"
+	/>
 </template>
 
 <script setup lang="ts">
-import {PRIORITIES} from '@/constants/priorities'
+import {computed} from 'vue'
+import {useI18n} from 'vue-i18n'
+import IconSelect, {type IconSelectOption} from '@/components/input/IconSelect.vue'
+import {PRIORITY_ORDER, PRIORITY_ICONS, PRIORITY_COLORS, PRIORITY_I18N_KEYS} from '@/helpers/priorityMeta'
 
 withDefaults(defineProps<{
 	disabled?: boolean
@@ -41,4 +24,12 @@ const priority = defineModel<number>({
 	default: 0,
 })
 
+const {t} = useI18n({useScope: 'global'})
+
+const options = computed<IconSelectOption[]>(() => PRIORITY_ORDER.map(p => ({
+	value: p,
+	label: t(PRIORITY_I18N_KEYS[p]),
+	icon: PRIORITY_ICONS[p],
+	color: PRIORITY_COLORS[p],
+})))
 </script>

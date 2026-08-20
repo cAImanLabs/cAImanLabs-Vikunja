@@ -6,7 +6,9 @@ import {
 	faAnglesUp,
 	faArchive,
 	faArrowLeft,
+	faArrowDown,
 	faArrowDownShortWide,
+	faArrowUp,
 	faArrowUpFromBracket,
 	faArrowUpRightFromSquare,
 	faArrowUpShortWide,
@@ -27,6 +29,7 @@ import {
 	faChessKnight,
 	faChevronDown,
 	faChevronRight,
+	faCircle,
 	faCircleInfo,
 	faCloudDownloadAlt,
 	faCloudUploadAlt,
@@ -37,6 +40,7 @@ import {
 	faDownload,
 	faEllipsisH,
 	faEllipsisV,
+	faEquals,
 	faExclamation,
 	faExclamationCircle,
 	faEye,
@@ -46,6 +50,7 @@ import {
 	faFilePdf,
 	faFillDrip,
 	faFilter,
+	faFire,
 	faForward,
 	faGripLines,
 	faHeader,
@@ -129,6 +134,8 @@ library.add(faAngleLeft)
 library.add(faAngleRight)
 library.add(faArchive)
 library.add(faArrowLeft)
+library.add(faArrowDown)
+library.add(faArrowUp)
 library.add(faBars)
 library.add(faBell)
 library.add(faBellSlash)
@@ -140,6 +147,7 @@ library.add(faCheckDouble)
 library.add(faChessKnight)
 library.add(faChevronDown)
 library.add(faChevronRight)
+library.add(faCircle)
 library.add(faCircleInfo)
 library.add(faCircleQuestion)
 library.add(faClock)
@@ -153,11 +161,13 @@ library.add(faCopy)
 library.add(faDownload)
 library.add(faEllipsisH)
 library.add(faEllipsisV)
+library.add(faEquals)
 library.add(faExclamationCircle)
 library.add(faEye)
 library.add(faEyeSlash)
 library.add(faFillDrip)
 library.add(faFilter)
+library.add(faFire)
 library.add(faForward)
 library.add(faGripLines)
 library.add(faHeader)

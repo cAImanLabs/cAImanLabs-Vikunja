@@ -114,13 +114,6 @@
 									:disabled="!canWrite"
 									@update:modelValue="setPriority"
 								/>
-								<PriorityLabel
-									v-if="task.priority !== PRIORITIES.UNSET"
-									:priority="task.priority"
-									:done="task.done"
-									:show-all="true"
-									class="mbs-2"
-								/>
 							</div>
 						</CustomTransition>
 						<CustomTransition
@@ -193,11 +186,6 @@
 									v-model="task.kind"
 									:disabled="!canWrite"
 									@update:modelValue="saveKind()"
-								/>
-								<TaskKindLabel
-									v-if="task.kind !== TASK_KINDS.TASK"
-									:kind="task.kind"
-									class="mbs-2"
 								/>
 								<Message
 									v-if="kindNeedsChildrenNudge"
@@ -810,11 +798,9 @@ import PercentDoneSelect from '@/components/tasks/partials/PercentDoneSelect.vue
 import StoryPointsSelect from '@/components/tasks/partials/StoryPointsSelect.vue'
 import StoryPointsLabel from '@/components/tasks/partials/StoryPointsLabel.vue'
 import TaskKindSelect from '@/components/tasks/partials/TaskKindSelect.vue'
-import TaskKindLabel from '@/components/tasks/partials/TaskKindLabel.vue'
 import SprintSelect from '@/components/tasks/partials/SprintSelect.vue'
 import SprintLabel from '@/components/tasks/partials/SprintLabel.vue'
 import PrioritySelect from '@/components/tasks/partials/PrioritySelect.vue'
-import PriorityLabel from '@/components/tasks/partials/PriorityLabel.vue'
 import RelatedTasks from '@/components/tasks/partials/RelatedTasks.vue'
 import Reminders from '@/components/tasks/partials/Reminders.vue'
 import RepeatAfter from '@/components/tasks/partials/RepeatAfter.vue'
@@ -828,6 +814,7 @@ import {uploadFile} from '@/helpers/attachments'
 import {getProjectTitle} from '@/helpers/getProjectTitle'
 import {isAppleDevice} from '@/helpers/isAppleDevice'
 import {scrollIntoView} from '@/helpers/scrollIntoView'
+import {getDueDateUrgency} from '@/helpers/time/dueDateUrgency'
 import {TASK_REPEAT_MODES} from '@/types/IRepeatMode'
 import {REMINDER_PERIOD_RELATIVE_TO_TYPES} from '@/types/IReminderPeriodRelativeTo'
 import {playPopSound} from '@/helpers/playPop'
@@ -885,33 +872,7 @@ watch(() => task.value.sprintId, sprintId => {
 }, {immediate: true})
 
 const {now} = useGlobalNow()
-const ONE_DAY_MS = 24 * 60 * 60 * 1000
-const DUE_SOON_DAYS = 3
-// A tiered read on how close the due date is, driving the color grading on
-// the due date field: red once overdue, then two lighter warning shades as
-// it approaches, so urgency is visible without opening the datepicker.
-const dueDateUrgency = computed<'overdue' | 'today' | 'soon' | null>(() => {
-	if (task.value.done || !task.value.dueDate) {
-		return null
-	}
-
-	const due = task.value.dueDate.getTime()
-	if (due === 0) {
-		return null
-	}
-
-	const nowMs = now.value.getTime()
-	if (due <= nowMs) {
-		return 'overdue'
-	}
-	if (due <= nowMs + ONE_DAY_MS) {
-		return 'today'
-	}
-	if (due <= nowMs + DUE_SOON_DAYS * ONE_DAY_MS) {
-		return 'soon'
-	}
-	return null
-})
+const dueDateUrgency = computed(() => getDueDateUrgency(task.value.dueDate, task.value.done, now.value))
 
 const hasAttachments = computed(() => (task.value.attachments?.length ?? 0) > 0)
 const remindersDefaultRelativeTo = computed(() => {
