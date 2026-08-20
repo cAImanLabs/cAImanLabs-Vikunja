@@ -1649,6 +1649,7 @@
       "licenseManage": "Manage"
     },
     "searchUsersPlaceholder": "Search by username or email…",
+    "searchTasksPlaceholder": "Search by task title or description…",
     "users": {
       "status": "Status",
       "details": "Details",

@@ -946,6 +946,11 @@ func registerAPIRoutes(a *echo.Group, wsRateLimit echo.MiddlewareFunc) {
 			return &models.AdminProjectList{}
 		},
 	}
+	adminTaskListHandler := &handler.WebHandler{
+		EmptyStruct: func() handler.CObject {
+			return &models.AdminTaskList{}
+		},
+	}
 	adminUserListHandler := &handler.WebHandler{
 		EmptyStruct: func() handler.CObject {
 			return &adminapi.UserList{}
@@ -959,6 +964,7 @@ func registerAPIRoutes(a *echo.Group, wsRateLimit echo.MiddlewareFunc) {
 	admin.DELETE("/users/:id", adminapi.DeleteUser)
 	admin.GET("/projects", adminProjectListHandler.ReadAllWeb)
 	admin.PATCH("/projects/:id/owner", adminapi.PatchProjectOwner)
+	admin.GET("/tasks", adminTaskListHandler.ReadAllWeb)
 
 	// Plugin routes
 	if config.PluginsEnabled.GetBool() {

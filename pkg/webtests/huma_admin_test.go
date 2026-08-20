@@ -98,3 +98,62 @@ func TestHumaAdminProjects(t *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
 }
+
+func TestHumaAdminTasks(t *testing.T) {
+	t.Run("non-admin user gets 404", func(t *testing.T) {
+		e, err := setupTestEnv()
+		require.NoError(t, err)
+		license.SetForTests([]license.Feature{license.FeatureAdminPanel})
+		defer license.ResetForTests()
+
+		s := db.NewSession()
+		defer s.Close()
+		u, err := user.GetUserByID(s, 1)
+		require.NoError(t, err)
+		require.False(t, u.IsAdmin, "fixture precondition: user1 is not an admin")
+
+		res := adminReq(t, e, http.MethodGet, "/api/v2/admin/tasks", u, "")
+		assert.Equal(t, http.StatusNotFound, res.Code)
+	})
+
+	t.Run("admin sees every task", func(t *testing.T) {
+		e, err := setupTestEnv()
+		require.NoError(t, err)
+		license.SetForTests([]license.Feature{license.FeatureAdminPanel})
+		defer license.ResetForTests()
+
+		admin := promoteToAdmin(t, 1)
+
+		res := adminReq(t, e, http.MethodGet, "/api/v2/admin/tasks", admin, "")
+		require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+
+		var envelope struct {
+			Items []struct {
+				ID    int64  `json:"id"`
+				Title string `json:"title"`
+			} `json:"items"`
+			Total int64 `json:"total"`
+		}
+		require.NoError(t, json.Unmarshal(res.Body.Bytes(), &envelope))
+
+		titles := make(map[string]bool, len(envelope.Items))
+		for _, item := range envelope.Items {
+			titles[item.Title] = true
+		}
+		// Task 15 belongs to project 6, owned by user6 and not shared with user1.
+		assert.True(t, titles["task #15"], "expected task #15 in the admin list, got %v", titles)
+
+		body := res.Body.String()
+		assert.Contains(t, body, `"project_title":`)
+	})
+
+	t.Run("unauthenticated caller gets 401", func(t *testing.T) {
+		e, err := setupTestEnv()
+		require.NoError(t, err)
+		license.SetForTests([]license.Feature{license.FeatureAdminPanel})
+		defer license.ResetForTests()
+
+		res := adminReq(t, e, http.MethodGet, "/api/v2/admin/tasks", nil, "")
+		assert.Equal(t, http.StatusUnauthorized, res.Code)
+	})
+}

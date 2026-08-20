@@ -472,6 +472,11 @@ const router = createRouter({
 					name: 'admin.projects',
 					component: () => import('@/views/admin/ProjectsView.vue'),
 				},
+				{
+					path: 'tasks',
+					name: 'admin.tasks',
+					component: () => import('@/views/admin/TasksView.vue'),
+				},
 			],
 		},
 	],

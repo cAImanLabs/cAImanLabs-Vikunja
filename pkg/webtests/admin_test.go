@@ -252,6 +252,24 @@ func TestAdmin_ListProjects(t *testing.T) {
 	assert.NotContains(t, body, `"owner":null`)
 }
 
+func TestAdmin_ListTasks(t *testing.T) {
+	e, err := setupTestEnv()
+	require.NoError(t, err)
+	license.SetForTests([]license.Feature{license.FeatureAdminPanel})
+	defer license.ResetForTests()
+
+	admin := promoteToAdmin(t, 1)
+	res := adminReq(t, e, http.MethodGet, "/api/v1/admin/tasks", admin, "")
+	assert.Equal(t, http.StatusOK, res.Code)
+	body := res.Body.String()
+	assert.Contains(t, body, `"id":`)
+	assert.Contains(t, body, `"title":`)
+	// Task 15 belongs to project 6, owned by user6 and not shared with user1 -
+	// proving the list ignores per-project permissions.
+	assert.Contains(t, body, `"title":"task #15"`)
+	assert.Contains(t, body, `"project_title":`)
+}
+
 func TestAdmin_PatchStatus(t *testing.T) {
 	e, err := setupTestEnv()
 	require.NoError(t, err)

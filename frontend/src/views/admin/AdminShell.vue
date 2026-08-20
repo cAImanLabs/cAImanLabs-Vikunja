@@ -28,5 +28,9 @@ const navigationItems = computed(() => [
 		title: t('project.projects'),
 		routeName: 'admin.projects',
 	},
+	{
+		title: t('admin.labels.tasks'),
+		routeName: 'admin.tasks',
+	},
 ])
 </script>
