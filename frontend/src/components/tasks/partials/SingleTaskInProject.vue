@@ -77,23 +77,16 @@
 					:labels="task.labels"
 				/>
 
-				<span
-					v-if="task.storyPoints > 0"
-					v-tooltip="$t('task.attributes.storyPoints')"
-					class="story-points-label mis-1"
-				>
-					<Icon icon="bolt" />
-					{{ task.storyPoints }}
-				</span>
+				<StoryPointsLabel
+					:points="task.storyPoints"
+					class="mis-1"
+				/>
 
-				<span
-					v-if="task.sprintId > 0 && sprintTitle"
-					v-tooltip="$t('task.attributes.sprint')"
-					class="sprint-label mis-1"
-				>
-					<Icon icon="layer-group" />
-					{{ sprintTitle }}
-				</span>
+				<SprintLabel
+					v-if="task.sprintId > 0"
+					:title="sprintTitle"
+					class="mis-1"
+				/>
 
 				<TaskKindLabel
 					v-if="task.kind !== TASK_KINDS.TASK"
@@ -231,6 +224,8 @@ import type {ITask} from '@/modelTypes/ITask'
 
 import PriorityLabel from '@/components/tasks/partials/PriorityLabel.vue'
 import TaskKindLabel from '@/components/tasks/partials/TaskKindLabel.vue'
+import StoryPointsLabel from '@/components/tasks/partials/StoryPointsLabel.vue'
+import SprintLabel from '@/components/tasks/partials/SprintLabel.vue'
 import Labels from '@/components/tasks/partials/Labels.vue'
 import TaskGlanceTooltip from '@/components/tasks/partials/TaskGlanceTooltip.vue'
 import DeferTask from '@/components/tasks/partials/DeferTask.vue'
@@ -518,17 +513,6 @@ defineExpose({
 		color: var(--grey-400);
 		font-size: .9rem;
 		white-space: nowrap;
-	}
-
-	.story-points-label,
-	.sprint-label {
-		color: var(--grey-400);
-		font-size: .9rem;
-		white-space: nowrap;
-
-		.icon {
-			margin-inline-end: .25rem;
-		}
 	}
 
 	.avatar {

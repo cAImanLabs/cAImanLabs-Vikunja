@@ -15,6 +15,16 @@
 			<Done
 				:is-done="task.done"
 			/>
+			<TaskKindLabel
+				v-if="task.kind !== TASK_KINDS.TASK"
+				:kind="task.kind"
+			/>
+			<PriorityLabel
+				v-if="task.priority !== PRIORITIES.UNSET"
+				:priority="task.priority"
+				:done="task.done"
+				:show-all="true"
+			/>
 			<BaseButton
 				v-if="hasClose"
 				:aria-label="$t('task.detail.closeTaskDetail')"
@@ -78,12 +88,16 @@ import BaseButton from '@/components/base/BaseButton.vue'
 import CustomTransition from '@/components/misc/CustomTransition.vue'
 import ColorBubble from '@/components/misc/ColorBubble.vue'
 import Done from '@/components/misc/Done.vue'
+import TaskKindLabel from '@/components/tasks/partials/TaskKindLabel.vue'
+import PriorityLabel from '@/components/tasks/partials/PriorityLabel.vue'
 
 import {useCopyToClipboard} from '@/composables/useCopyToClipboard'
 import {useTaskStore} from '@/stores/tasks'
 
 import type {ITask} from '@/modelTypes/ITask'
 import {getHexColor, getTaskIdentifier} from '@/models/task'
+import {TASK_KINDS} from '@/modelTypes/ITaskKind'
+import {PRIORITIES} from '@/constants/priorities'
 
 const props = defineProps<{
 	task: ITask,

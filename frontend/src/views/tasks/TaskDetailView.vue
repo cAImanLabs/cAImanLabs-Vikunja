@@ -114,6 +114,13 @@
 									:disabled="!canWrite"
 									@update:modelValue="setPriority"
 								/>
+								<PriorityLabel
+									v-if="task.priority !== PRIORITIES.UNSET"
+									:priority="task.priority"
+									:done="task.done"
+									:show-all="true"
+									class="mbs-2"
+								/>
 							</div>
 						</CustomTransition>
 						<CustomTransition
@@ -134,6 +141,10 @@
 									v-model="task.storyPoints"
 									:disabled="!canWrite"
 									@update:modelValue="saveTask()"
+								/>
+								<StoryPointsLabel
+									:points="task.storyPoints"
+									class="mbs-2"
 								/>
 							</div>
 						</CustomTransition>
@@ -157,6 +168,11 @@
 									:disabled="!canWrite"
 									@update:modelValue="saveTask()"
 								/>
+								<SprintLabel
+									v-if="task.sprintId > 0"
+									:title="sprintTitle"
+									class="mbs-2"
+								/>
 							</div>
 						</CustomTransition>
 						<CustomTransition
@@ -177,6 +193,11 @@
 									v-model="task.kind"
 									:disabled="!canWrite"
 									@update:modelValue="saveKind()"
+								/>
+								<TaskKindLabel
+									v-if="task.kind !== TASK_KINDS.TASK"
+									:kind="task.kind"
+									class="mbs-2"
 								/>
 								<Message
 									v-if="kindNeedsChildrenNudge"
@@ -203,7 +224,10 @@
 									<Icon icon="calendar" />
 									{{ $t('task.attributes.dueDate') }}
 								</div>
-								<div class="date-input">
+								<div
+									class="date-input"
+									:class="dueDateUrgency ? `due-${dueDateUrgency}` : ''"
+								>
 									<Datepicker
 										:ref="e => setFieldRef('dueDate', e)"
 										v-model="task.dueDate"
@@ -784,9 +808,13 @@ import Heading from '@/components/tasks/partials/Heading.vue'
 import ProjectSearch from '@/components/tasks/partials/ProjectSearch.vue'
 import PercentDoneSelect from '@/components/tasks/partials/PercentDoneSelect.vue'
 import StoryPointsSelect from '@/components/tasks/partials/StoryPointsSelect.vue'
+import StoryPointsLabel from '@/components/tasks/partials/StoryPointsLabel.vue'
 import TaskKindSelect from '@/components/tasks/partials/TaskKindSelect.vue'
+import TaskKindLabel from '@/components/tasks/partials/TaskKindLabel.vue'
 import SprintSelect from '@/components/tasks/partials/SprintSelect.vue'
+import SprintLabel from '@/components/tasks/partials/SprintLabel.vue'
 import PrioritySelect from '@/components/tasks/partials/PrioritySelect.vue'
+import PriorityLabel from '@/components/tasks/partials/PriorityLabel.vue'
 import RelatedTasks from '@/components/tasks/partials/RelatedTasks.vue'
 import Reminders from '@/components/tasks/partials/Reminders.vue'
 import RepeatAfter from '@/components/tasks/partials/RepeatAfter.vue'
@@ -810,9 +838,11 @@ import {useProjectStore} from '@/stores/projects'
 import {useAuthStore} from '@/stores/auth'
 import {useBaseStore} from '@/stores/base'
 import {useConfigStore} from '@/stores/config'
+import {useSprintStore} from '@/stores/sprints'
 
 import {useTitle} from '@/composables/useTitle'
 import {useTaskDetailShortcuts} from '@/composables/useTaskDetailShortcuts'
+import {useGlobalNow} from '@/composables/useGlobalNow'
 
 import {success, error} from '@/message'
 import type {Action as MessageAction} from '@/message'
@@ -837,6 +867,7 @@ const timeTrackingEnabled = computed(() => configStore.isProFeatureEnabled(PRO_F
 const kanbanStore = useKanbanStore()
 const authStore = useAuthStore()
 const baseStore = useBaseStore()
+const sprintStore = useSprintStore()
 
 const task = ref<ITask>(new TaskModel())
 // Tracks the last kind that actually made it to the server, so a failed
@@ -845,6 +876,43 @@ const task = ref<ITask>(new TaskModel())
 // the change handler runs, so there's no other way to recover the old one.
 let lastSavedKind: TaskKind = TASK_KINDS.TASK
 const kindNeedsChildrenNudge = ref(false)
+
+const sprintTitle = computed(() => sprintStore.getSprintById(task.value.sprintId)?.title)
+watch(() => task.value.sprintId, sprintId => {
+	if (sprintId > 0) {
+		sprintStore.ensureProjectLoaded(task.value.projectId)
+	}
+}, {immediate: true})
+
+const {now} = useGlobalNow()
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
+const DUE_SOON_DAYS = 3
+// A tiered read on how close the due date is, driving the color grading on
+// the due date field: red once overdue, then two lighter warning shades as
+// it approaches, so urgency is visible without opening the datepicker.
+const dueDateUrgency = computed<'overdue' | 'today' | 'soon' | null>(() => {
+	if (task.value.done || !task.value.dueDate) {
+		return null
+	}
+
+	const due = task.value.dueDate.getTime()
+	if (due === 0) {
+		return null
+	}
+
+	const nowMs = now.value.getTime()
+	if (due <= nowMs) {
+		return 'overdue'
+	}
+	if (due <= nowMs + ONE_DAY_MS) {
+		return 'today'
+	}
+	if (due <= nowMs + DUE_SOON_DAYS * ONE_DAY_MS) {
+		return 'soon'
+	}
+	return null
+})
+
 const hasAttachments = computed(() => (task.value.attachments?.length ?? 0) > 0)
 const remindersDefaultRelativeTo = computed(() => {
 	if (task.value.dueDate) {
@@ -1428,6 +1496,22 @@ h2 .button {
 .date-input {
 	display: flex;
 	align-items: center;
+
+	// Color grading by urgency: red once overdue, then two lighter warning
+	// shades as the due date approaches, so it's readable at a glance.
+	&.due-overdue :deep(.datepicker .show) {
+		color: var(--danger-text);
+		font-weight: bold;
+	}
+
+	&.due-today :deep(.datepicker .show) {
+		color: var(--warning-dark);
+		font-weight: bold;
+	}
+
+	&.due-soon :deep(.datepicker .show) {
+		color: var(--warning-dark);
+	}
 }
 
 .remove {
