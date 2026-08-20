@@ -16,6 +16,7 @@ export interface ISprint extends IAbstract {
 	startDate: Date | null
 	endDate: Date | null
 	status: SprintStatus
+	hexColor: string
 	projectId: IProject['id']
 
 	createdBy: IUser | null
@@ -33,6 +34,7 @@ export interface ISprintFormData {
 	startDate: Date | null
 	endDate: Date | null
 	status: SprintStatus
+	hexColor: string
 }
 
 // One sprint's total vs completed story points, for plotting velocity across a project's sprints.

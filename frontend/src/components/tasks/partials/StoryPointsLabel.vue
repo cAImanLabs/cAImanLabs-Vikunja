@@ -3,6 +3,7 @@
 		v-if="points > 0"
 		v-tooltip="$t('task.attributes.storyPoints')"
 		class="story-points-label"
+		:style="{color: STORY_POINTS_COLORS[points]}"
 	>
 		<span class="icon">
 			<Icon icon="bolt" />
@@ -12,6 +13,8 @@
 </template>
 
 <script setup lang="ts">
+import {STORY_POINTS_COLORS} from '@/helpers/storyPointsMeta'
+
 defineProps<{
 	points: number,
 }>()

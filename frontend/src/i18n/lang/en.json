@@ -539,6 +539,7 @@
       "goal": "Goal",
       "goalPlaceholder": "What should this sprint accomplish?",
       "status": "Status",
+      "color": "Color",
       "startDate": "Start Date",
       "endDate": "End Date",
       "edit": "Edit this sprint",
@@ -1122,6 +1123,7 @@
       "updated": "Updated",
       "doneAt": "Done At",
       "storyPoints": "Story Points",
+      "storyPointsCount": "{count} pt | {count} pts",
       "sprint": "Sprint",
       "kind": "Type"
     },

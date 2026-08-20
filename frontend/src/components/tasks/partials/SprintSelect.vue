@@ -9,7 +9,22 @@
 		:disabled="disabled"
 		:aria-label="$t('task.attributes.sprint')"
 		@search="findSprints"
-	/>
+	>
+		<template #searchResult="{option}">
+			<span
+				v-if="typeof option !== 'string'"
+				class="sprint-select-option"
+			>
+				<span
+					class="sprint-select-option-icon"
+					:style="{color: option.hexColor ? `#${option.hexColor}` : undefined}"
+				>
+					<Icon icon="layer-group" />
+				</span>
+				<span>{{ option.title }}</span>
+			</span>
+		</template>
+	</Multiselect>
 </template>
 
 <script setup lang="ts">
@@ -75,3 +90,18 @@ function findSprints(newQuery: string) {
 	query.value = newQuery
 }
 </script>
+
+<style lang="scss" scoped>
+.sprint-select-option {
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
+}
+
+.sprint-select-option-icon {
+	display: inline-flex;
+	inline-size: 1rem;
+	flex-shrink: 0;
+	color: var(--grey-400);
+}
+</style>

@@ -4,7 +4,10 @@
 		v-tooltip="$t('task.attributes.sprint')"
 		class="sprint-label"
 	>
-		<span class="icon">
+		<span
+			class="icon"
+			:style="{color: color ? `#${color}` : undefined}"
+		>
 			<Icon icon="layer-group" />
 		</span>
 		<span>{{ title }}</span>
@@ -14,6 +17,7 @@
 <script setup lang="ts">
 defineProps<{
 	title?: string,
+	color?: string,
 }>()
 </script>
 

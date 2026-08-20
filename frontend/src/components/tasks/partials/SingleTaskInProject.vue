@@ -85,6 +85,7 @@
 				<SprintLabel
 					v-if="task.sprintId > 0"
 					:title="sprintTitle"
+					:color="sprintColor"
 					class="mis-1"
 				/>
 
@@ -313,6 +314,7 @@ const projectColor = computed(() => project.value ? project.value?.hexColor : ''
 const assigneeBackgroundColor = computed(() => getAssigneeBackgroundColor(task.value.assignees))
 
 const sprintTitle = computed(() => sprintStore.getSprintById(task.value.sprintId)?.title)
+const sprintColor = computed(() => sprintStore.getSprintById(task.value.sprintId)?.hexColor)
 watch(() => task.value.sprintId, sprintId => {
 	if (sprintId > 0) {
 		sprintStore.ensureProjectLoaded(task.value.projectId)

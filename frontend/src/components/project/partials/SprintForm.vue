@@ -39,24 +39,32 @@
 			</div>
 		</div>
 
-		<FormField :label="$t('project.sprint.status')">
-			<template #default="{id}">
-				<div class="select">
-					<select
-						:id="id"
-						v-model="form.status"
-					>
-						<option
-							v-for="s in SPRINT_STATUSES"
-							:key="s"
-							:value="s"
-						>
-							{{ $t(`project.sprint.status_${s}`) }}
-						</option>
-					</select>
-				</div>
-			</template>
-		</FormField>
+		<div class="columns">
+			<div class="column">
+				<FormField :label="$t('project.sprint.status')">
+					<template #default="{id}">
+						<div class="select">
+							<select
+								:id="id"
+								v-model="form.status"
+							>
+								<option
+									v-for="s in SPRINT_STATUSES"
+									:key="s"
+									:value="s"
+								>
+									{{ $t(`project.sprint.status_${s}`) }}
+								</option>
+							</select>
+						</div>
+					</template>
+				</FormField>
+			</div>
+			<div class="column is-narrow">
+				<label class="label">{{ $t('project.sprint.color') }}</label>
+				<ColorPicker v-model="form.hexColor" />
+			</div>
+		</div>
 
 		<slot name="extra-fields" />
 
@@ -83,6 +91,7 @@ import {ref} from 'vue'
 
 import FormField from '@/components/input/FormField.vue'
 import Datepicker from '@/components/input/Datepicker.vue'
+import ColorPicker from '@/components/input/ColorPicker.vue'
 
 import {SPRINT_STATUSES} from '@/modelTypes/ISprint'
 import type {ISprintFormData} from '@/modelTypes/ISprint'

@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"code.vikunja.io/api/pkg/user"
+	"code.vikunja.io/api/pkg/utils"
 	"code.vikunja.io/api/pkg/web"
 
 	"github.com/danielgtaylor/huma/v2"
@@ -98,6 +99,8 @@ type Sprint struct {
 	EndDate time.Time `xorm:"DATETIME null 'end_date'" json:"end_date" doc:"When this sprint ends. Optional."`
 	// The status of this sprint. Can be `planning`, `active` or `completed`.
 	Status SprintStatus `xorm:"not null default 0" json:"status" swaggertype:"string" enums:"planning,active,completed" doc:"The status of this sprint. One of planning, active or completed."`
+	// The sprint color in hex
+	HexColor string `xorm:"varchar(6) null" json:"hex_color" valid:"runelength(0|7)" maxLength:"7" doc:"The sprint color as a hex string without the leading '#'."`
 	// The project this sprint belongs to.
 	ProjectID int64 `xorm:"bigint not null index" json:"project_id" param:"project" readOnly:"true" doc:"The project this sprint belongs to. Taken from the URL path; ignored on write."`
 
@@ -176,16 +179,18 @@ func (sp *Sprint) Create(s *xorm.Session, a web.Auth) (err error) {
 	}
 	sp.CreatedByID = sp.CreatedBy.ID
 
+	sp.HexColor = utils.NormalizeHex(sp.HexColor)
 	sp.ID = 0
 	_, err = s.Insert(sp)
 	return err
 }
 
-// Update updates an existing sprint's title, goal, dates and status. Requires write access to the project.
+// Update updates an existing sprint's title, goal, dates, status and color. Requires write access to the project.
 func (sp *Sprint) Update(s *xorm.Session, _ web.Auth) (err error) {
+	sp.HexColor = utils.NormalizeHex(sp.HexColor)
 	_, err = s.
 		Where("id = ?", sp.ID).
-		Cols("title", "goal", "start_date", "end_date", "status").
+		Cols("title", "goal", "start_date", "end_date", "status", "hex_color").
 		Update(sp)
 	return
 }

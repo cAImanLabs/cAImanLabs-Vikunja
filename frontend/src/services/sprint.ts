@@ -21,6 +21,7 @@ export function parseSprint(raw: Record<string, unknown>): ISprint {
 		startDate: parseOptionalDate(s.startDate),
 		endDate: parseOptionalDate(s.endDate),
 		status: s.status,
+		hexColor: s.hexColor ?? '',
 		projectId: s.projectId,
 		createdBy: s.createdBy ?? null,
 		created: new Date(s.created),

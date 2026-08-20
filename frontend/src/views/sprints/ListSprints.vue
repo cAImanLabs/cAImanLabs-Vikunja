@@ -96,17 +96,30 @@
 				v-else
 				class="all-sprints-list"
 			>
-				<BaseButton
+				<div
 					v-for="row in allSprints"
 					:key="row.sprint.id"
 					class="all-sprints-row"
 					:class="[`is-status-${row.sprint.status}`, {'is-loading-card': loadingProjectId === row.project.id}]"
-					@click="openProjectSprints(row.project)"
+					:style="row.sprint.hexColor ? {borderInlineStartColor: `#${row.sprint.hexColor}`} : undefined"
 				>
-					<span class="all-sprints-row-title">{{ row.sprint.title }}</span>
-					<span class="all-sprints-row-project">{{ getProjectTitle(row.project) }}</span>
-					<span class="all-sprints-row-status">{{ $t(`project.sprint.status_${row.sprint.status}`) }}</span>
-				</BaseButton>
+					<BaseButton
+						class="all-sprints-row-content"
+						@click="openProjectSprints(row.project)"
+					>
+						<span class="all-sprints-row-title">{{ row.sprint.title }}</span>
+						<span class="all-sprints-row-project">{{ getProjectTitle(row.project) }}</span>
+						<span class="all-sprints-row-status">{{ $t(`project.sprint.status_${row.sprint.status}`) }}</span>
+					</BaseButton>
+					<BaseButton
+						v-if="(row.project.maxPermission ?? 0) > Permissions.READ"
+						class="has-text-danger"
+						:aria-label="$t('project.sprint.delete')"
+						@click.stop="confirmDelete(row)"
+					>
+						<Icon icon="trash-alt" />
+					</BaseButton>
+				</div>
 			</div>
 		</Card>
 
@@ -134,6 +147,19 @@
 				</span>
 			</BaseButton>
 		</div>
+
+		<Modal
+			:enabled="showDeleteModal"
+			@close="showDeleteModal = false"
+			@submit="deleteSprint"
+		>
+			<template #header>
+				<span>{{ $t('project.sprint.delete') }}</span>
+			</template>
+			<template #text>
+				<p>{{ $t('project.sprint.deleteText') }}</p>
+			</template>
+		</Modal>
 	</div>
 </template>
 
@@ -159,6 +185,7 @@ import type {ISprint, ISprintFormData} from '@/modelTypes/ISprint'
 import type {ITask} from '@/modelTypes/ITask'
 import {SPRINT_STATUSES} from '@/modelTypes/ISprint'
 
+import {PERMISSIONS as Permissions} from '@/constants/permissions'
 import {getProjectTitle} from '@/helpers/getProjectTitle'
 import {useTitle} from '@/composables/useTitle'
 import {error, success} from '@/message'
@@ -235,6 +262,30 @@ async function loadAllSprints(forProjects: readonly IProject[]) {
 
 watch(projects, newProjects => loadAllSprints(newProjects as IProject[]), {immediate: true})
 
+const showDeleteModal = ref(false)
+const rowToDelete = ref<{sprint: ISprint, project: IProject} | null>(null)
+
+function confirmDelete(row: {sprint: ISprint, project: IProject}) {
+	rowToDelete.value = row
+	showDeleteModal.value = true
+}
+
+async function deleteSprint() {
+	if (!rowToDelete.value) {
+		return
+	}
+
+	const {sprint, project} = rowToDelete.value
+	try {
+		await sprintService.remove(project.id, sprint.id)
+		allSprints.value = allSprints.value.filter(row => row.sprint.id !== sprint.id)
+		showDeleteModal.value = false
+		success({message: t('project.sprint.deleteSuccess')})
+	} catch (e) {
+		error(e)
+	}
+}
+
 function emptySprint(): ISprintFormData {
 	return {
 		title: '',
@@ -242,6 +293,7 @@ function emptySprint(): ISprintFormData {
 		startDate: null,
 		endDate: null,
 		status: SPRINT_STATUSES.PLANNING,
+		hexColor: '',
 	}
 }
 
@@ -324,16 +376,13 @@ async function createSprint() {
 .all-sprints-row {
 	display: flex;
 	align-items: center;
-	gap: 1rem;
-	inline-size: 100%;
-	text-align: start;
-	padding: .75rem 1rem;
+	gap: .5rem;
 	border-radius: $radius;
 	border-inline-start: .25rem solid var(--grey-300);
 	transition: background-color $transition;
 
 	&:hover,
-	&:focus {
+	&:focus-within {
 		background-color: var(--grey-100);
 	}
 
@@ -347,6 +396,16 @@ async function createSprint() {
 
 	&.is-status-completed {
 		border-inline-start-color: var(--success);
+	}
+
+	&-content {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex: 1;
+		min-inline-size: 0;
+		text-align: start;
+		padding: .75rem 1rem;
 	}
 
 	&-title {

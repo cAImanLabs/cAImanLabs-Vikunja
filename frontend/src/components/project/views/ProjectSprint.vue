@@ -93,6 +93,7 @@
 					:key="sprint.id"
 					class="sprint-card"
 					:class="`is-status-${sprint.status}`"
+					:style="sprint.hexColor ? {borderInlineStartColor: `#${sprint.hexColor}`} : undefined"
 				>
 					<template v-if="editingId === sprint.id">
 						<SprintForm
@@ -285,6 +286,7 @@ function emptySprint(): ISprintFormData {
 		startDate: null,
 		endDate: null,
 		status: SPRINT_STATUSES.PLANNING,
+		hexColor: '',
 	}
 }
 
@@ -356,6 +358,7 @@ function startEdit(sprint: ISprint) {
 		startDate: sprint.startDate,
 		endDate: sprint.endDate,
 		status: sprint.status,
+		hexColor: sprint.hexColor,
 	}
 }
 
@@ -387,6 +390,7 @@ async function updateStatus(sprint: ISprint, status: SprintStatus) {
 		startDate: sprint.startDate,
 		endDate: sprint.endDate,
 		status,
+		hexColor: sprint.hexColor,
 	})
 	sprints.value = sprints.value.map(s => s.id === updated.id ? updated : s)
 	sprintStore.setSprints([updated])

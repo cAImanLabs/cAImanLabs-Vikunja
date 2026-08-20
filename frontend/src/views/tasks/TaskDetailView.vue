@@ -135,10 +135,6 @@
 									:disabled="!canWrite"
 									@update:modelValue="saveTask()"
 								/>
-								<StoryPointsLabel
-									:points="task.storyPoints"
-									class="mbs-2"
-								/>
 							</div>
 						</CustomTransition>
 						<CustomTransition
@@ -160,11 +156,6 @@
 									:project-id="task.projectId"
 									:disabled="!canWrite"
 									@update:modelValue="saveTask()"
-								/>
-								<SprintLabel
-									v-if="task.sprintId > 0"
-									:title="sprintTitle"
-									class="mbs-2"
 								/>
 							</div>
 						</CustomTransition>
@@ -796,10 +787,8 @@ import Heading from '@/components/tasks/partials/Heading.vue'
 import ProjectSearch from '@/components/tasks/partials/ProjectSearch.vue'
 import PercentDoneSelect from '@/components/tasks/partials/PercentDoneSelect.vue'
 import StoryPointsSelect from '@/components/tasks/partials/StoryPointsSelect.vue'
-import StoryPointsLabel from '@/components/tasks/partials/StoryPointsLabel.vue'
 import TaskKindSelect from '@/components/tasks/partials/TaskKindSelect.vue'
 import SprintSelect from '@/components/tasks/partials/SprintSelect.vue'
-import SprintLabel from '@/components/tasks/partials/SprintLabel.vue'
 import PrioritySelect from '@/components/tasks/partials/PrioritySelect.vue'
 import RelatedTasks from '@/components/tasks/partials/RelatedTasks.vue'
 import Reminders from '@/components/tasks/partials/Reminders.vue'
@@ -825,7 +814,6 @@ import {useProjectStore} from '@/stores/projects'
 import {useAuthStore} from '@/stores/auth'
 import {useBaseStore} from '@/stores/base'
 import {useConfigStore} from '@/stores/config'
-import {useSprintStore} from '@/stores/sprints'
 
 import {useTitle} from '@/composables/useTitle'
 import {useTaskDetailShortcuts} from '@/composables/useTaskDetailShortcuts'
@@ -854,7 +842,6 @@ const timeTrackingEnabled = computed(() => configStore.isProFeatureEnabled(PRO_F
 const kanbanStore = useKanbanStore()
 const authStore = useAuthStore()
 const baseStore = useBaseStore()
-const sprintStore = useSprintStore()
 
 const task = ref<ITask>(new TaskModel())
 // Tracks the last kind that actually made it to the server, so a failed
@@ -863,13 +850,6 @@ const task = ref<ITask>(new TaskModel())
 // the change handler runs, so there's no other way to recover the old one.
 let lastSavedKind: TaskKind = TASK_KINDS.TASK
 const kindNeedsChildrenNudge = ref(false)
-
-const sprintTitle = computed(() => sprintStore.getSprintById(task.value.sprintId)?.title)
-watch(() => task.value.sprintId, sprintId => {
-	if (sprintId > 0) {
-		sprintStore.ensureProjectLoaded(task.value.projectId)
-	}
-}, {immediate: true})
 
 const {now} = useGlobalNow()
 const dueDateUrgency = computed(() => getDueDateUrgency(task.value.dueDate, task.value.done, now.value))
