@@ -60,7 +60,6 @@ import (
 	"time"
 
 	"code.vikunja.io/api/pkg/config"
-	"code.vikunja.io/api/pkg/license"
 	"code.vikunja.io/api/pkg/log"
 	"code.vikunja.io/api/pkg/models"
 	"code.vikunja.io/api/pkg/modules/auth/oauth2server"
@@ -421,14 +420,15 @@ func noStoreCacheControl() echo.MiddlewareFunc {
 
 const v2AdminPathPrefix = "/api/v2/admin"
 
-// gateV2AdminRoutes reuses v1's RequireFeature/RequireInstanceAdmin gate (both
-// 404-on-failure) as path-scoped middleware: splitting v2 into a gated Echo
-// sub-group would split the Huma API and drop admin ops from the OpenAPI spec.
+// gateV2AdminRoutes reuses v1's RequireInstanceAdmin gate (404-on-failure) as
+// path-scoped middleware: splitting v2 into a gated Echo sub-group would
+// split the Huma API and drop admin ops from the OpenAPI spec.
+// The admin panel is a free feature in this fork - only is_admin is enforced,
+// no license check.
 func gateV2AdminRoutes() echo.MiddlewareFunc {
-	feature := RequireFeature(license.FeatureAdminPanel)
 	admin := RequireInstanceAdmin()
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		gated := feature(admin(next))
+		gated := admin(next)
 		return func(c *echo.Context) error {
 			if strings.HasPrefix(c.Request().URL.Path, v2AdminPathPrefix) {
 				return gated(c)
@@ -936,8 +936,9 @@ func registerAPIRoutes(a *echo.Group, wsRateLimit echo.MiddlewareFunc) {
 	}
 	a.POST("/projects/:project/views/:view/buckets/:bucket/tasks", taskBucketProvider.UpdateWeb)
 
+	// The admin panel is a free feature in this fork - only is_admin is
+	// enforced, no license check.
 	admin := a.Group("/admin",
-		RequireFeature(license.FeatureAdminPanel),
 		RequireInstanceAdmin(),
 	)
 	adminProjectListHandler := &handler.WebHandler{

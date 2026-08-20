@@ -362,12 +362,11 @@ func CollectRoutesForAPITokenUsage(route echo.RouteInfo, requiresJWT bool) {
 // licenseFeatureForRoute maps a route path to the license feature whose
 // request-time gate 404s it. Gated routes are always registered (the gates
 // react to license changes at runtime), so this must stay in sync with
-// timeTrackingGate and gateV2AdminRoutes in pkg/routes.
+// timeTrackingGate in pkg/routes. Admin routes are free in this fork (see
+// gateV2AdminRoutes / the "/admin" group in pkg/routes/routes.go) and are
+// deliberately not gated here anymore.
 func licenseFeatureForRoute(path string) (license.Feature, bool) {
-	switch {
-	case strings.HasPrefix(path, "/api/v1/admin/"), strings.HasPrefix(path, "/api/v2/admin/"):
-		return license.FeatureAdminPanel, true
-	case strings.Contains(path, "/time-entries"):
+	if strings.Contains(path, "/time-entries") {
 		return license.FeatureTimeTracking, true
 	}
 	return license.FeatureUnknown, false

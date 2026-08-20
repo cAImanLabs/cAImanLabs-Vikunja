@@ -28,7 +28,7 @@ import (
 
 // GetOverview returns aggregate instance counts and metadata.
 // @Summary Admin overview
-// @Description Returns per-instance counts (users, projects, shares) plus version and license info. Instance-admin only, gated by the admin_panel feature.
+// @Description Returns per-instance counts (users, projects, shares) plus version and license info. Instance-admin only.
 // @tags admin
 // @Produce json
 // @Security JWTKeyAuth

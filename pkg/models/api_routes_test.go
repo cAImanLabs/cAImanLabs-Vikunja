@@ -197,7 +197,8 @@ func TestGetAPITokenRoutes_LicenseFilter(t *testing.T) {
 		routes := GetAPITokenRoutes()
 
 		assert.Contains(t, routes, "labels")
-		assert.NotContains(t, routes, "admin")
+		// admin routes are free in this fork, so they're never license-filtered.
+		assert.Contains(t, routes, "admin")
 		assert.NotContains(t, routes, "time_entries")
 		require.Contains(t, routes, "tasks")
 		assert.Contains(t, routes["tasks"], "read_all")
@@ -210,7 +211,7 @@ func TestGetAPITokenRoutes_LicenseFilter(t *testing.T) {
 	})
 
 	t.Run("licensed", func(t *testing.T) {
-		license.SetForTests([]license.Feature{license.FeatureTimeTracking, license.FeatureAdminPanel})
+		license.SetForTests([]license.Feature{license.FeatureTimeTracking})
 		defer license.ResetForTests()
 		routes := GetAPITokenRoutes()
 

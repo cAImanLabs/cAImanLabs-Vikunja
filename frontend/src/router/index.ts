@@ -561,19 +561,15 @@ router.beforeEach(async (to, from) => {
 	await authStore.checkAuth()
 
 	if (to.meta?.requiresAdminPanel) {
-		// Await config/auth hydration so the license check doesn't race the empty default
-		// on direct /admin navigation. appReady resolves without waiting on router.isReady(),
-		// so awaiting it here doesn't deadlock the initial navigation.
+		// Await auth hydration so isAdmin doesn't race the empty default on direct /admin navigation.
 		const baseStore = useBaseStore()
 		await baseStore.appReady
-		const configStore = useConfigStore()
-		const featureOn = configStore.isProFeatureEnabled(PRO_FEATURE.ADMIN_PANEL)
 		// isAdmin comes from /user, not the JWT; force-fetch in case checkAuth() was debounced.
 		if (authStore.info?.isAdmin === undefined) {
 			await authStore.refreshUserInfo()
 		}
 		const isAdmin = authStore.info?.isAdmin === true
-		if (!featureOn || !isAdmin) {
+		if (!isAdmin) {
 			return {name: 'not-found'}
 		}
 	}

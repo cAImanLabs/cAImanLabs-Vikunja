@@ -34,7 +34,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// Gate behaviour (404 on non-admin/unlicensed, 401 unauthenticated) is shared by
+// Gate behaviour (404 on non-admin, 401 unauthenticated) is shared by
 // every /api/v2/admin route; covered once here against the overview endpoint.
 func TestHumaAdminOverview(t *testing.T) {
 	t.Run("non-admin user gets 404", func(t *testing.T) {
@@ -50,18 +50,6 @@ func TestHumaAdminOverview(t *testing.T) {
 		require.False(t, u.IsAdmin, "fixture precondition: user1 is not an admin")
 
 		res := adminReq(t, e, http.MethodGet, "/api/v2/admin/overview", u, "")
-		assert.Equal(t, http.StatusNotFound, res.Code)
-	})
-
-	t.Run("admin without the feature gets 404", func(t *testing.T) {
-		e, err := setupTestEnv()
-		require.NoError(t, err)
-		license.SetForTests([]license.Feature{})
-		defer license.ResetForTests()
-
-		admin := promoteToAdmin(t, 1)
-
-		res := adminReq(t, e, http.MethodGet, "/api/v2/admin/overview", admin, "")
 		assert.Equal(t, http.StatusNotFound, res.Code)
 	})
 
