@@ -87,6 +87,8 @@ export default class TaskModel extends AbstractModel<ITask> implements ITask {
 	coverImageAttachmentId: IAttachment['id'] = null
 	identifier = ''
 	index = 0
+	kindIdentifier = ''
+	kindIndex = 0
 	isFavorite = false
 	subscription: ISubscription = null
 

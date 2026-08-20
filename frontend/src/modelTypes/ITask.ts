@@ -48,6 +48,8 @@ export interface ITask extends IAbstract {
 	coverImageAttachmentId: IAttachment['id'] | null
 	identifier: string
 	index: number
+	kindIdentifier: string
+	kindIndex: number
 	isFavorite: boolean
 	isUnread?: boolean
 	subscription: ISubscription

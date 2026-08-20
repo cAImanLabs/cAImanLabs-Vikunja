@@ -129,3 +129,26 @@ func (k *TaskKind) TaskKindLevel() int {
 	}
 	return 1
 }
+
+// Prefix returns the short, uppercase prefix used to build this kind's
+// per-kind ticket identifier (e.g. "ST" for a Story, so the 5th story
+// created becomes "ST-05"). See Task.KindIndex/KindIdentifier.
+func (k *TaskKind) Prefix() string {
+	switch *k {
+	case TaskKindEpic:
+		return "EPIC"
+	case TaskKindStory:
+		return "ST"
+	case TaskKindBug:
+		return "BUG"
+	case TaskKindSubtask:
+		return "SUB"
+	case TaskKindFeature:
+		return "FEAT"
+	case TaskKindInitiative:
+		return "INIT"
+	case TaskKindTask:
+		return "TASK"
+	}
+	return "TASK"
+}

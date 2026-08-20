@@ -19,6 +19,7 @@ package models
 
 import (
 	"errors"
+	"fmt"
 	"math"
 	"regexp"
 	"slices"
@@ -113,12 +114,17 @@ type Task struct {
 	// Sprint ID this task belongs to
 	SprintID int64 `xorm:"bigint INDEX null 'sprint_id'" json:"sprint_id" doc:"The id of the sprint this task belongs to."`
 	// The kind of task this is, similar to an issue type. Can be `task`, `epic`, `story`, `bug`, `subtask` or `feature`.
-	Kind TaskKind `xorm:"not null default 0 'kind'" json:"kind" swaggertype:"string" enums:"task,epic,story,bug,subtask,feature,initiative" doc:"The kind of task this is, similar to an issue type. One of task, epic, story, bug, subtask, feature or initiative. These map to a 5-level hierarchy (initiative > feature > epic > story/task/bug > subtask); a subtask requires a parenttask relation to a story/task/bug."`
+	Kind TaskKind `xorm:"not null default 0 'kind' unique(tasks_kind_index)" json:"kind" swaggertype:"string" enums:"task,epic,story,bug,subtask,feature,initiative" doc:"The kind of task this is, similar to an issue type. One of task, epic, story, bug, subtask, feature or initiative. These map to a 5-level hierarchy (initiative > feature > epic > story/task/bug > subtask); a subtask requires a parenttask relation to a story/task/bug."`
 
 	// The task identifier, based on the project identifier and the task's index
 	Identifier string `xorm:"-" json:"identifier" readOnly:"true" doc:"The textual task identifier, derived from the project identifier and the task index (e.g. \"PROJ-12\")."`
 	// The task index, calculated per project
 	Index int64 `xorm:"bigint not null default 0 unique(tasks_project_index)" json:"index" param:"index" readOnly:"true" doc:"The per-project task index, assigned by the server."`
+
+	// The per-kind ticket identifier, based on the task's kind and its kind index
+	KindIdentifier string `xorm:"-" json:"kind_identifier" readOnly:"true" doc:"The textual, per-kind ticket identifier, derived from the task's kind and its kind index (e.g. \"ST-05\" for the 5th story created instance-wide)."`
+	// The task index within its kind, counted instance-wide across every project
+	KindIndex int64 `xorm:"bigint not null default 0 unique(tasks_kind_index) 'kind_index'" json:"kind_index" readOnly:"true" doc:"The instance-wide, per-kind task index, assigned by the server. Reassigned if the task's kind changes; the old value is never reused."`
 
 	// The UID is currently not used for anything other than CalDAV, which is why we don't expose it over json
 	UID string `xorm:"varchar(250) null" json:"-"`
@@ -498,6 +504,12 @@ func (t *Task) setIdentifier(project *Project) {
 	t.Identifier = project.Identifier + "-" + strconv.FormatInt(t.Index, 10)
 }
 
+// setKindIdentifier builds the textual per-kind ticket number (e.g. "ST-05"),
+// zero-padded to at least two digits to match the "ST-01" style.
+func (t *Task) setKindIdentifier() {
+	t.KindIdentifier = fmt.Sprintf("%s-%02d", t.Kind.Prefix(), t.KindIndex)
+}
+
 func addIsUnreadToTasks(s *xorm.Session, taskIDs []int64, taskMap map[int64]*Task, a web.Auth) (err error) {
 	if len(taskIDs) == 0 {
 		return nil
@@ -816,6 +828,7 @@ func addMoreInfoToTasks(s *xorm.Session, taskMap map[int64]*Task, a web.Auth, vi
 
 		// Build the task identifier from the project identifier and task index
 		task.setIdentifier(projects[task.ProjectID])
+		task.setKindIdentifier()
 
 		task.IsFavorite = taskFavorites[task.ID]
 
@@ -941,6 +954,43 @@ func setNewTaskIndexes(s *xorm.Session, projectID int64, tasks []*Task) (err err
 	return nil
 }
 
+// calculateNextTaskKindIndex returns the next free per-kind ticket number,
+// counted instance-wide (not scoped to a project) so e.g. "ST-05" always
+// refers to the same task no matter which project it's in.
+func calculateNextTaskKindIndex(s *xorm.Session, kind TaskKind) (nextIndex int64, err error) {
+	latestTask := &Task{}
+	// Unscoped so a kind index is never reused while a soft-deleted task still holds it
+	_, err = s.
+		Unscoped().
+		Where("kind = ?", kind).
+		OrderBy("kind_index desc").
+		Get(latestTask)
+	if err != nil {
+		return 0, err
+	}
+
+	return latestTask.KindIndex + 1, nil
+}
+
+// setNewTaskKindIndexes assigns the next free per-kind ticket number to each
+// task being created, per kind present in the batch.
+func setNewTaskKindIndexes(s *xorm.Session, tasks []*Task) (err error) {
+	nextByKind := map[TaskKind]int64{}
+	for _, t := range tasks {
+		next, ok := nextByKind[t.Kind]
+		if !ok {
+			next, err = calculateNextTaskKindIndex(s, t.Kind)
+			if err != nil {
+				return err
+			}
+		}
+		t.KindIndex = next
+		nextByKind[t.Kind] = next + 1
+	}
+
+	return nil
+}
+
 // Create is the implementation to create a project task
 // @Summary Create a task
 // @Description Inserts a task into a project.
@@ -1060,6 +1110,11 @@ func createTasks(s *xorm.Session, projectID int64, tasks []*Task, a web.Auth, up
 		return err
 	}
 
+	err = setNewTaskKindIndexes(s, tasks)
+	if err != nil {
+		return err
+	}
+
 	for _, t := range tasks {
 		t.CreatedByID = createdBy.ID
 
@@ -1128,6 +1183,7 @@ func createTasks(s *xorm.Session, projectID int64, tasks []*Task, a web.Auth, up
 		}
 
 		t.setIdentifier(p)
+		t.setKindIdentifier()
 
 		if t.IsFavorite {
 			if err := addToFavorites(s, t.ID, createdBy, FavoriteKindTask); err != nil {
@@ -1268,6 +1324,7 @@ func (t *Task) updateSingleTask(s *xorm.Session, a web.Auth, fields []string) (e
 	if err != nil {
 		return
 	}
+	originalKind := ot.Kind
 
 	if t.ProjectID == 0 {
 		t.ProjectID = ot.ProjectID
@@ -1622,6 +1679,17 @@ func (t *Task) updateSingleTask(s *xorm.Session, a web.Auth, fields []string) (e
 		if !hasParent {
 			return ErrTaskKindRequiresParentRelation{TaskID: ot.ID}
 		}
+	}
+
+	// Reassign a fresh per-kind ticket number when the kind actually changes,
+	// mirroring how a ProjectID change reassigns Index above - the old number
+	// is simply retired and never reused (see calculateNextTaskKindIndex).
+	if slices.Contains(colsToUpdate, "kind") && ot.Kind != originalKind {
+		ot.KindIndex, err = calculateNextTaskKindIndex(s, ot.Kind)
+		if err != nil {
+			return err
+		}
+		colsToUpdate = append(colsToUpdate, "kind_index")
 	}
 
 	_, err = s.ID(t.ID).
