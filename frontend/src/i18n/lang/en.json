@@ -1126,7 +1126,8 @@
       "storyPoints": "Story Points",
       "storyPointsCount": "{count} pt | {count} pts",
       "sprint": "Sprint",
-      "kind": "Type"
+      "kind": "Type",
+      "kindIdentifier": "Ticket number, based on the task's type"
     },
     "subscription": {
       "subscribedTaskThroughParentProject": "You can't unsubscribe here because you are subscribed to this task through its project.",

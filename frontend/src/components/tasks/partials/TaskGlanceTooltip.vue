@@ -22,7 +22,16 @@
 				<div class="task-glance-content">
 					<div class="task-glance-header">
 						<div class="task-glance-title-section">
-							<span class="task-identifier">{{ taskIdentifier }}</span>
+							<div class="task-glance-identifiers">
+								<span class="task-identifier">{{ taskIdentifier }}</span>
+								<span
+									v-if="task.kindIdentifier"
+									class="task-identifier kind-identifier"
+									:style="{color: TASK_KIND_COLORS[task.kind]}"
+								>
+									{{ task.kindIdentifier }}
+								</span>
+							</div>
 							<span class="task-title">{{ task.title }}</span>
 						</div>
 						<div class="task-glance-indicators">
@@ -89,6 +98,7 @@ import {useMediaQuery} from '@vueuse/core'
 
 import type {ITask} from '@/modelTypes/ITask'
 import {getTaskIdentifier} from '@/models/task'
+import {TASK_KIND_COLORS} from '@/helpers/taskKindMeta'
 import {formatDisplayDate} from '@/helpers/time/formatDate'
 import {getDisplayName} from '@/models/user'
 import {isEditorContentEmpty} from '@/helpers/editorContentEmpty'
@@ -236,6 +246,12 @@ onUnmounted(() => {
 	gap: 0.25rem;
 	flex: 1;
 	min-inline-size: 0; /* Allow text to wrap */
+}
+
+.task-glance-identifiers {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
 }
 
 .task-identifier {

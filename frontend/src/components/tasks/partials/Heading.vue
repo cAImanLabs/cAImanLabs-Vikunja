@@ -11,6 +11,14 @@
 						{{ textIdentifier }}
 					</span>
 				</BaseButton>
+				<span
+					v-if="task.kindIdentifier"
+					v-tooltip="$t('task.attributes.kindIdentifier')"
+					class="title task-id kind-identifier"
+					:style="{color: TASK_KIND_COLORS[task.kind]}"
+				>
+					{{ task.kindIdentifier }}
+				</span>
 			</div>
 			<Done
 				:is-done="task.done"
@@ -97,6 +105,7 @@ import {useTaskStore} from '@/stores/tasks'
 import type {ITask} from '@/modelTypes/ITask'
 import {getHexColor, getTaskIdentifier} from '@/models/task'
 import {TASK_KINDS} from '@/modelTypes/ITaskKind'
+import {TASK_KIND_COLORS} from '@/helpers/taskKindMeta'
 import {PRIORITIES} from '@/constants/priorities'
 
 const props = defineProps<{
