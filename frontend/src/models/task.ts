@@ -98,6 +98,7 @@ export default class TaskModel extends AbstractModel<ITask> implements ITask {
 	comments = []
 
 	createdBy: IUser = UserModel
+	completedBy: IUser | null = null
 	created: Date = null
 	updated: Date = null
 
@@ -156,6 +157,7 @@ export default class TaskModel extends AbstractModel<ITask> implements ITask {
 		}
 
 		this.createdBy = new UserModel(this.createdBy)
+		this.completedBy = this.completedBy === null ? null : new UserModel(this.completedBy)
 		this.created = new Date(this.created)
 		this.updated = new Date(this.updated)
 

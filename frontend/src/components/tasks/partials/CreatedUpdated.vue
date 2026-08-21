@@ -39,6 +39,15 @@
 					<span>{{ doneSince }}</span>
 				</i18n-t>
 			</time>
+			<template v-if="task.completedBy">
+				<br>
+				<i18n-t
+					keypath="task.detail.completedBy"
+					scope="global"
+				>
+					<span>{{ getDisplayName(task.completedBy) }}</span>
+				</i18n-t>
+			</template>
 		</template>
 	</p>
 </template>

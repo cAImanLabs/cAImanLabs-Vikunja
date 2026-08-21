@@ -401,6 +401,17 @@ func registerEventsForAuditLogging() {
 			},
 		}
 	})
+	audit.RegisterEventForAudit(func(e *AdminTaskCompletedByChangedEvent) *audit.Entry {
+		return &audit.Entry{
+			Action: audit.ActionAdminTaskCompletedByChanged,
+			Actor:  auditActorFromUser(e.Doer),
+			Target: audit.TaskTarget(e.Task.ID),
+			Metadata: map[string]any{
+				"old_completed_by_id": e.OldCompletedByID,
+				"new_completed_by_id": e.NewCompletedByID,
+			},
+		}
+	})
 	audit.RegisterEventForAudit(func(e *AdminUsersListedEvent) *audit.Entry {
 		return &audit.Entry{
 			Action: audit.ActionAdminUsersListed,

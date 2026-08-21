@@ -134,16 +134,17 @@ const (
 	ActionTeamMemberAdded   = "team.member.added"
 	ActionTeamMemberRemoved = "team.member.removed"
 
-	ActionAdminUserCreated           = "admin.user.created"
-	ActionAdminUserAdminGranted      = "admin.user.admin.granted"
-	ActionAdminUserAdminRevoked      = "admin.user.admin.revoked"
-	ActionAdminUserStatusChanged     = "admin.user.status.changed"
-	ActionAdminUserPasswordSet       = "admin.user.password.set"        // #nosec G101 -- action identifier, not a credential
-	ActionAdminUserPasswordResetSent = "admin.user.password_reset.sent" // #nosec G101
-	ActionAdminUserDeleted           = "admin.user.deleted"
-	ActionAdminProjectOwnerChanged   = "admin.project.owner.changed"
-	ActionAdminUsersListed           = "admin.users.listed"
-	ActionAdminAccessDenied          = "admin.access.denied"
+	ActionAdminUserCreated            = "admin.user.created"
+	ActionAdminUserAdminGranted       = "admin.user.admin.granted"
+	ActionAdminUserAdminRevoked       = "admin.user.admin.revoked"
+	ActionAdminUserStatusChanged      = "admin.user.status.changed"
+	ActionAdminUserPasswordSet        = "admin.user.password.set"        // #nosec G101 -- action identifier, not a credential
+	ActionAdminUserPasswordResetSent  = "admin.user.password_reset.sent" // #nosec G101
+	ActionAdminUserDeleted            = "admin.user.deleted"
+	ActionAdminProjectOwnerChanged    = "admin.project.owner.changed"
+	ActionAdminTaskCompletedByChanged = "admin.task.completed_by.changed"
+	ActionAdminUsersListed            = "admin.users.listed"
+	ActionAdminAccessDenied           = "admin.access.denied"
 )
 
 // The type strings are unexported; these constructors are the only way to

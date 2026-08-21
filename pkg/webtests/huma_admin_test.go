@@ -24,6 +24,7 @@ import (
 
 	"code.vikunja.io/api/pkg/db"
 	"code.vikunja.io/api/pkg/license"
+	"code.vikunja.io/api/pkg/models"
 	"code.vikunja.io/api/pkg/user"
 
 	"github.com/stretchr/testify/assert"
@@ -156,4 +157,67 @@ func TestHumaAdminTasks(t *testing.T) {
 		res := adminReq(t, e, http.MethodGet, "/api/v2/admin/tasks", nil, "")
 		assert.Equal(t, http.StatusUnauthorized, res.Code)
 	})
+}
+
+func TestHumaAdminPatchTaskCompletedBy(t *testing.T) {
+	e, err := setupTestEnv()
+	require.NoError(t, err)
+	license.SetForTests([]license.Feature{license.FeatureAdminPanel})
+	defer license.ResetForTests()
+
+	admin := promoteToAdmin(t, 1)
+
+	t.Run("credits a different user", func(t *testing.T) {
+		// Task 2 is fixture-seeded as done.
+		res := adminReq(t, e, http.MethodPatch, "/api/v2/admin/tasks/2/completed-by", admin, `{"completed_by_id":2}`)
+		assert.Equal(t, http.StatusOK, res.Code, res.Body.String())
+
+		db.AssertExists(t, "tasks", map[string]interface{}{
+			"id":              2,
+			"completed_by_id": 2,
+		}, false)
+	})
+
+	t.Run("rejects a task that isn't done", func(t *testing.T) {
+		res := adminReq(t, e, http.MethodPatch, "/api/v2/admin/tasks/3/completed-by", admin, `{"completed_by_id":2}`)
+		assert.Equal(t, http.StatusBadRequest, res.Code)
+	})
+
+	t.Run("nonexistent task returns 404", func(t *testing.T) {
+		res := adminReq(t, e, http.MethodPatch, "/api/v2/admin/tasks/99999/completed-by", admin, `{"completed_by_id":2}`)
+		assert.Equal(t, http.StatusNotFound, res.Code)
+	})
+
+	t.Run("non-admin caller gets 404", func(t *testing.T) {
+		s := db.NewSession()
+		u, err := user.GetUserByID(s, 2)
+		require.NoError(t, err)
+		s.Close()
+
+		res := adminReq(t, e, http.MethodPatch, "/api/v2/admin/tasks/2/completed-by", u, `{"completed_by_id":2}`)
+		assert.Equal(t, http.StatusNotFound, res.Code)
+	})
+}
+
+func TestHumaAdminTaskCompletionStats(t *testing.T) {
+	e, err := setupTestEnv()
+	require.NoError(t, err)
+	license.SetForTests([]license.Feature{license.FeatureAdminPanel})
+	defer license.ResetForTests()
+
+	admin := promoteToAdmin(t, 1)
+
+	s := db.NewSession()
+	_, err = s.ID(int64(2)).Cols("completed_by_id", "story_points").Update(&models.Task{CompletedByID: 1, StoryPoints: 3})
+	require.NoError(t, err)
+	require.NoError(t, s.Commit())
+	s.Close()
+
+	res := adminReq(t, e, http.MethodGet, "/api/v2/admin/tasks/completion-stats", admin, "")
+	assert.Equal(t, http.StatusOK, res.Code, res.Body.String())
+	body := res.Body.String()
+	assert.Contains(t, body, `"user_id":1`)
+	assert.Contains(t, body, `"username":"user1"`)
+	assert.Contains(t, body, `"completed":1`)
+	assert.Contains(t, body, `"story_points":3`)
 }

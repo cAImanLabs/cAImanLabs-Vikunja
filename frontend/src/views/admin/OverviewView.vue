@@ -116,6 +116,33 @@
 					</p>
 				</div>
 			</div>
+
+			<div class="admin-overview__charts">
+				<div class="admin-overview__chart-card">
+					<h2 class="admin-overview__card-title">
+						{{ $t('admin.overview.completionShareTitle') }}
+					</h2>
+					<UserCompletionPieChart :stats="completionStats" />
+				</div>
+				<div class="admin-overview__chart-card">
+					<h2 class="admin-overview__card-title">
+						{{ $t('admin.overview.completedCountTitle') }}
+					</h2>
+					<UserStatsBarChart
+						:stats="completionStats"
+						value-key="completed"
+					/>
+				</div>
+				<div class="admin-overview__chart-card">
+					<h2 class="admin-overview__card-title">
+						{{ $t('admin.overview.storyPointsTitle') }}
+					</h2>
+					<UserStatsBarChart
+						:stats="completionStats"
+						value-key="storyPoints"
+					/>
+				</div>
+			</div>
 		</div>
 	</Card>
 </template>
@@ -126,16 +153,22 @@ import dayjs from 'dayjs'
 import Card from '@/components/misc/Card.vue'
 import Icon from '@/components/misc/Icon'
 import TimeDisplay from '@/components/misc/TimeDisplay.vue'
+import UserCompletionPieChart from '@/components/admin/UserCompletionPieChart.vue'
+import UserStatsBarChart from '@/components/admin/UserStatsBarChart.vue'
 import AdminOverviewService from '@/services/admin/overviewService'
+import AdminTaskService from '@/services/admin/taskService'
 import type {IAdminOverview} from '@/modelTypes/IAdminOverview'
+import type {IUserTaskCompletionStat} from '@/modelTypes/IUserTaskCompletionStat'
 import {useConfigStore} from '@/stores/config'
 import {error} from '@/message'
 
 const adminOverviewService = new AdminOverviewService()
+const adminTaskService = new AdminTaskService()
 const configStore = useConfigStore()
 
 const data = ref<IAdminOverview | null>(null)
 const loading = ref(false)
+const completionStats = ref<IUserTaskCompletionStat[]>([])
 
 const expiresInDays = computed<number | null>(() => {
 	const expiresAt = data.value?.license?.expiresAt
@@ -157,6 +190,12 @@ onMounted(async () => {
 		error(e)
 	} finally {
 		loading.value = false
+	}
+
+	try {
+		completionStats.value = await adminTaskService.getCompletionStats()
+	} catch (e) {
+		error(e)
 	}
 })
 </script>
@@ -182,6 +221,26 @@ onMounted(async () => {
 
 .admin-overview__card {
 	position: relative;
+	background: var(--white);
+	border: 1px solid var(--grey-200);
+	border-radius: 6px;
+	padding: 1.25rem;
+}
+
+.admin-overview__charts {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+	margin-block-start: 1rem;
+}
+
+@media screen and (min-width: $desktop) {
+	.admin-overview__charts {
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+	}
+}
+
+.admin-overview__chart-card {
 	background: var(--white);
 	border: 1px solid var(--grey-200);
 	border-radius: 6px;

@@ -187,6 +187,13 @@ type Task struct {
 	CreatedBy   *user.User `xorm:"-" json:"created_by" valid:"-" readOnly:"true" doc:"The user who created this task. Set by the server."`
 	CreatedByID int64      `xorm:"bigint not null" json:"-"` // ID of the user who put that task on the project
 
+	// The user credited with completing this task. Set automatically to whoever
+	// marks the task done; an instance admin can reassign it via the admin-only
+	// completed-by endpoint for cases where that's not who actually did the work.
+	// Not settable through the regular task update endpoint.
+	CompletedBy   *user.User `xorm:"-" json:"completed_by" valid:"-" readOnly:"true" doc:"The user credited with completing this task. Only set while the task is done; may differ from whoever marked it done if an admin reassigned it."`
+	CompletedByID int64      `xorm:"bigint INDEX null 'completed_by_id'" json:"-"`
+
 	web.CRUDable    `xorm:"-" json:"-"`
 	web.Permissions `xorm:"-" json:"-"`
 }
@@ -716,6 +723,9 @@ func addMoreInfoToTasks(s *xorm.Session, taskMap map[int64]*Task, a web.Auth, vi
 		if i.CreatedByID != 0 {
 			userIDs = append(userIDs, i.CreatedByID)
 		}
+		if i.CompletedByID != 0 {
+			userIDs = append(userIDs, i.CompletedByID)
+		}
 		projectIDs = append(projectIDs, i.ProjectID)
 	}
 
@@ -818,6 +828,10 @@ func addMoreInfoToTasks(s *xorm.Session, taskMap map[int64]*Task, a web.Auth, vi
 		// Make created by user objects
 		if createdBy, has := users[task.CreatedByID]; has {
 			task.CreatedBy = createdBy
+		}
+
+		if completedBy, has := users[task.CompletedByID]; has {
+			task.CompletedBy = completedBy
 		}
 
 		// Add the reminders
@@ -1516,10 +1530,34 @@ func (t *Task) updateSingleTask(s *xorm.Session, a web.Auth, fields []string) (e
 	preRepeatDueDate, preRepeatStartDate, preRepeatEndDate := t.DueDate, t.StartDate, t.EndDate
 	preRepeatDescription := t.Description
 
+	// Captured before updateDone runs, since it flips t.Done back to false for
+	// repeating tasks (they auto-reopen for their next occurrence) - that would
+	// otherwise hide the done transition from the completed-by logic below.
+	wasDone := ot.Done
+	willBeDone := t.Done
+
 	// When a repeating task is marked as done, we update all deadlines and reminders and set it as undone
 	updateDoneAt := updateDone(&ot, t)
 	if updateDoneAt {
 		colsToUpdate = append(colsToUpdate, "done_at")
+	}
+
+	// completed_by_id isn't in colsToUpdate's whitelist, so callers can't set it
+	// directly - it's only ever derived here or via the admin-only reassignment.
+	if !wasDone && willBeDone {
+		completedBy, err := GetUserOrLinkShareUser(s, a)
+		if err != nil {
+			return err
+		}
+		if completedBy != nil {
+			t.CompletedByID = completedBy.ID
+			t.CompletedBy = completedBy
+			colsToUpdate = append(colsToUpdate, "completed_by_id")
+		}
+	} else if wasDone && !willBeDone {
+		t.CompletedByID = 0
+		t.CompletedBy = nil
+		colsToUpdate = append(colsToUpdate, "completed_by_id")
 	}
 
 	// updateDone reschedules after colsToUpdate was frozen from the caller's field list,

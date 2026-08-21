@@ -1053,6 +1053,7 @@
       "created": "Created {0} by {1}",
       "updated": "Updated {0}",
       "doneAt": "Done {0}",
+  "completedBy": "Completed by {0}",
       "titleRequired": "The task title can't be empty.",
       "updateSuccess": "The task was saved successfully.",
       "deleteSuccess": "The task has been deleted successfully.",
@@ -1646,7 +1647,13 @@
       "licenseLastCheckFailed": "last check failed",
       "licenseFeatures": "Features",
       "licenseInstance": "Instance ID",
-      "licenseManage": "Manage"
+      "licenseManage": "Manage",
+      "completionShareTitle": "Completion Share by User",
+      "completedCountTitle": "Tickets Completed by User",
+      "storyPointsTitle": "Story Points Completed by User",
+      "completionShareAriaLabel": "Pie chart showing each user's share of completed tickets",
+      "completionOtherLabel": "Other",
+      "completionChartsEmpty": "No completed tickets yet."
     },
     "searchUsersPlaceholder": "Search by username or email…",
     "searchTasksPlaceholder": "Search by task title or description…",
@@ -1691,6 +1698,13 @@
       "reassignTitle": "Reassign {title}",
       "reassignedSuccess": "Project owner reassigned.",
       "newOwnerLabel": "New owner"
+    },
+    "tasks": {
+      "completedByLabel": "Completed By",
+      "reassignCompletedBy": "Reassign completion",
+      "reassignTitle": "Reassign completion of {title}",
+      "reassignedSuccess": "Task completion reassigned.",
+      "newCompletedByLabel": "Completed by"
     }
   }
 }

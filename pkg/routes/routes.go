@@ -965,6 +965,8 @@ func registerAPIRoutes(a *echo.Group, wsRateLimit echo.MiddlewareFunc) {
 	admin.GET("/projects", adminProjectListHandler.ReadAllWeb)
 	admin.PATCH("/projects/:id/owner", adminapi.PatchProjectOwner)
 	admin.GET("/tasks", adminTaskListHandler.ReadAllWeb)
+	admin.GET("/tasks/completion-stats", adminapi.GetTaskCompletionStats)
+	admin.PATCH("/tasks/:id/completed-by", adminapi.PatchTaskCompletedBy)
 
 	// Plugin routes
 	if config.PluginsEnabled.GetBool() {

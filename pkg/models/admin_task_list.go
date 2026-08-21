@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"code.vikunja.io/api/pkg/db"
+	"code.vikunja.io/api/pkg/events"
 	"code.vikunja.io/api/pkg/log"
 	"code.vikunja.io/api/pkg/user"
 	"code.vikunja.io/api/pkg/web"
@@ -68,17 +69,20 @@ func ListAllTasks(s *xorm.Session, search string, page, perPage int) (tasks []*A
 	}
 
 	projectIDs := make([]int64, 0, len(rawTasks))
-	creatorIDs := make([]int64, 0, len(rawTasks))
+	userIDs := make([]int64, 0, len(rawTasks)*2)
 	for _, t := range rawTasks {
 		projectIDs = append(projectIDs, t.ProjectID)
-		creatorIDs = append(creatorIDs, t.CreatedByID)
+		userIDs = append(userIDs, t.CreatedByID)
+		if t.CompletedByID != 0 {
+			userIDs = append(userIDs, t.CompletedByID)
+		}
 	}
 
 	projects, err := GetProjectsMapByIDs(s, projectIDs)
 	if err != nil {
 		return nil, 0, 0, err
 	}
-	creators, err := user.GetUsersByIDs(s, creatorIDs)
+	users, err := user.GetUsersByIDs(s, userIDs)
 	if err != nil {
 		return nil, 0, 0, err
 	}
@@ -89,13 +93,49 @@ func ListAllTasks(s *xorm.Session, search string, page, perPage int) (tasks []*A
 		if p, ok := projects[t.ProjectID]; ok {
 			entry.ProjectTitle = p.Title
 		}
-		if c, ok := creators[t.CreatedByID]; ok {
+		if c, ok := users[t.CreatedByID]; ok {
 			entry.CreatedBy = c
+		}
+		if c, ok := users[t.CompletedByID]; ok {
+			entry.CompletedBy = c
 		}
 		tasks = append(tasks, entry)
 	}
 
 	return tasks, resultCount, totalItems, nil
+}
+
+// ReassignTaskCompletedBy credits a different user with completing an
+// already-done task, for cases where whoever marked it done wasn't the one
+// who actually did the work.
+func ReassignTaskCompletedBy(s *xorm.Session, doer *user.User, taskID, completedByID int64) (*Task, error) {
+	t, err := GetTaskByIDSimple(s, taskID)
+	if err != nil {
+		return nil, err
+	}
+	if !t.Done {
+		return nil, ErrInvalidData{Message: "task is not done"}
+	}
+
+	completedBy, err := user.GetUserByID(s, completedByID)
+	if err != nil {
+		return nil, err
+	}
+
+	oldCompletedByID := t.CompletedByID
+	t.CompletedByID = completedByID
+	if _, err := s.ID(t.ID).Cols("completed_by_id").Update(&t); err != nil {
+		return nil, err
+	}
+	t.CompletedBy = completedBy
+
+	events.DispatchOnCommit(s, &AdminTaskCompletedByChangedEvent{
+		Task:             &t,
+		Doer:             doer,
+		OldCompletedByID: oldCompletedByID,
+		NewCompletedByID: completedByID,
+	})
+	return &t, nil
 }
 
 func getRawTasksUnscoped(s *xorm.Session, search string, page, perPage int) (tasks []*Task, resultCount int, totalItems int64, err error) {

@@ -552,6 +552,20 @@ func (e *AdminProjectOwnerChangedEvent) Name() string {
 	return "admin.project.owner.changed"
 }
 
+// AdminTaskCompletedByChangedEvent represents an admin reassigning who is
+// credited with completing a task
+type AdminTaskCompletedByChangedEvent struct {
+	Task             *Task      `json:"task"`
+	Doer             *user.User `json:"doer"`
+	OldCompletedByID int64      `json:"old_completed_by_id"`
+	NewCompletedByID int64      `json:"new_completed_by_id"`
+}
+
+// Name defines the name for AdminTaskCompletedByChangedEvent
+func (e *AdminTaskCompletedByChangedEvent) Name() string {
+	return "admin.task.completed_by.changed"
+}
+
 // AdminUsersListedEvent represents an admin reading the full user list,
 // which exposes every user's email address.
 type AdminUsersListedEvent struct {

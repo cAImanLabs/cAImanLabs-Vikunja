@@ -62,6 +62,7 @@ export interface ITask extends IAbstract {
 	timeEntriesCount?: number
 
 	createdBy: IUser
+	completedBy: IUser | null
 	created: Date
 	updated: Date
 
