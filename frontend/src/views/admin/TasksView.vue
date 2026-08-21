@@ -14,65 +14,67 @@
 				{{ $t('misc.loading') }}
 			</p>
 			<template v-else>
-				<table class="table has-actions is-striped is-hoverable is-fullwidth">
-					<thead>
-						<tr>
-							<th>{{ $t('misc.id') }}</th>
-							<th>{{ $t('task.attributes.title') }}</th>
-							<th>{{ $t('task.attributes.project') }}</th>
-							<th>{{ $t('task.attributes.priority') }}</th>
-							<th>{{ $t('task.attributes.dueDate') }}</th>
-							<th>{{ $t('task.attributes.done') }}</th>
-							<th>{{ $t('admin.tasks.completedByLabel') }}</th>
-							<th>{{ $t('task.attributes.created') }}</th>
-							<th />
-						</tr>
-					</thead>
-					<tbody>
-						<tr
-							v-for="task in tasks"
-							:key="task.id"
-						>
-							<td>{{ task.id }}</td>
-							<td>
-								<RouterLink :to="{name: 'task.detail', params: {id: task.id}}">
-									{{ task.title }}
-								</RouterLink>
-								<TaskKindLabel
-									:kind="task.kind"
-									class="admin-tasks__kind"
-								/>
-							</td>
-							<td>{{ task.projectTitle }}</td>
-							<td>
-								<PriorityLabel
-									:priority="task.priority"
-									:done="task.done"
-								/>
-							</td>
-							<td>
-								<TimeDisplay
-									v-if="task.dueDate"
-									:date="task.dueDate"
-								/>
-							</td>
-							<td>{{ task.done ? $t('task.attributes.done') : '' }}</td>
-							<td>{{ task.completedBy?.username ?? '' }}</td>
-							<td>
-								<TimeDisplay :date="task.created" />
-							</td>
-							<td class="actions">
-								<XButton
-									v-if="task.done"
-									variant="secondary"
-									@click="openReassign(task)"
-								>
-									{{ $t('admin.tasks.reassignCompletedBy') }}
-								</XButton>
-							</td>
-						</tr>
-					</tbody>
-				</table>
+				<div class="admin-tasks__table-scroll">
+					<table class="table has-actions is-striped is-hoverable is-fullwidth">
+						<thead>
+							<tr>
+								<th>{{ $t('misc.id') }}</th>
+								<th>{{ $t('task.attributes.title') }}</th>
+								<th>{{ $t('task.attributes.project') }}</th>
+								<th>{{ $t('task.attributes.priority') }}</th>
+								<th>{{ $t('task.attributes.dueDate') }}</th>
+								<th>{{ $t('task.attributes.done') }}</th>
+								<th>{{ $t('admin.tasks.completedByLabel') }}</th>
+								<th>{{ $t('task.attributes.created') }}</th>
+								<th />
+							</tr>
+						</thead>
+						<tbody>
+							<tr
+								v-for="task in tasks"
+								:key="task.id"
+							>
+								<td>{{ task.id }}</td>
+								<td>
+									<RouterLink :to="{name: 'task.detail', params: {id: task.id}, query: {from: 'admin'}}">
+										{{ task.title }}
+									</RouterLink>
+									<TaskKindLabel
+										:kind="task.kind"
+										class="admin-tasks__kind"
+									/>
+								</td>
+								<td>{{ task.projectTitle }}</td>
+								<td>
+									<PriorityLabel
+										:priority="task.priority"
+										:done="task.done"
+									/>
+								</td>
+								<td>
+									<TimeDisplay
+										v-if="task.dueDate"
+										:date="task.dueDate"
+									/>
+								</td>
+								<td>{{ task.done ? $t('task.attributes.done') : '' }}</td>
+								<td>{{ task.completedBy?.username ?? '' }}</td>
+								<td>
+									<TimeDisplay :date="task.created" />
+								</td>
+								<td class="actions">
+									<XButton
+										v-if="task.done"
+										variant="secondary"
+										@click="openReassign(task)"
+									>
+										{{ $t('admin.tasks.reassignCompletedBy') }}
+									</XButton>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 				<PaginationEmit
 					v-if="totalPages > 1"
 					:total-pages="totalPages"
@@ -96,6 +98,7 @@
 							:loading="userSearchLoading"
 							:placeholder="$t('admin.searchUsersPlaceholder')"
 							:search-results="userResults"
+							:show-empty="true"
 							label="username"
 							@search="searchUsers"
 						>
@@ -198,13 +201,16 @@ function openReassign(task: IAdminTask) {
 	reassignTarget.value = task
 	userResults.value = []
 	selectedUser.value = null
+	// Loads the full (unfiltered) user list as soon as the modal opens, so
+	// admins who don't know the exact username get a browsable dropdown
+	// instead of a blank box that only responds once you start typing. Not
+	// wired to a Multiselect @focus listener: 'focus' doesn't bubble and Vue's
+	// attrs fallthrough attaches to the component root, not the inner input,
+	// so it never actually fires.
+	searchUsers('')
 }
 
-async function searchUsers(query: string) {
-	if (!query || query.length < 2) {
-		userResults.value = []
-		return
-	}
+async function searchUsers(query = '') {
 	userSearchLoading.value = true
 	try {
 		userResults.value = await adminUserService.getAll(new AdminUserModel(), {s: query})
@@ -240,6 +246,13 @@ onMounted(load)
 // `.table.has-actions` sets overflow: hidden which clips the dropdown menu.
 .admin-tasks :deep(.table.has-actions) {
 	overflow: visible;
+}
+
+// The table is wider than the viewport on small/medium screens (project,
+// completed-by and the reassign button all need room) - scroll it
+// horizontally instead of letting the action column run off-screen.
+.admin-tasks__table-scroll {
+	overflow-x: auto;
 }
 
 .admin-tasks__toolbar {

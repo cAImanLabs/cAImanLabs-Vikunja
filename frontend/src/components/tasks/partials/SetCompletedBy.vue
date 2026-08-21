@@ -5,6 +5,7 @@
 		:loading="userSearchLoading"
 		:placeholder="placeholder"
 		:search-results="userResults"
+		:show-empty="true"
 		label="username"
 		@search="searchUsers"
 		@select="reassign"
@@ -21,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, computed} from 'vue'
+import {ref, computed, onMounted} from 'vue'
 import {useI18n} from 'vue-i18n'
 
 import Multiselect from '@/components/input/Multiselect.vue'
@@ -61,11 +62,15 @@ const placeholder = computed(() => props.modelValue
 const userResults = ref<IAdminUser[]>([])
 const userSearchLoading = ref(false)
 
-async function searchUsers(query: string) {
-	if (!query || query.length < 2) {
-		userResults.value = []
-		return
-	}
+// Loads the full (unfiltered) user list as soon as this field is revealed, so
+// admins who don't know the exact username get a browsable dropdown instead of
+// a blank box that only responds once you start typing. Not wired to a
+// Multiselect @focus listener: 'focus' doesn't bubble and Vue's attrs
+// fallthrough attaches to the component root, not the inner input, so it
+// never actually fires.
+onMounted(() => searchUsers(''))
+
+async function searchUsers(query = '') {
 	userSearchLoading.value = true
 	try {
 		userResults.value = await adminUserService.getAll(new AdminUserModel(), {s: query})

@@ -15,10 +15,10 @@
 			<BaseButton
 				v-if="!isModal"
 				class="back-button mbs-2"
-				@click="lastProject ? router.back() : router.push(projectRoute)"
+				@click="openedFromAdmin ? router.push({name: 'admin.tasks'}) : (lastProject ? router.back() : router.push(projectRoute))"
 			>
 				<Icon icon="arrow-left" />
-				{{ $t('task.detail.back') }}
+				{{ openedFromAdmin ? $t('task.detail.backToDashboard') : $t('task.detail.back') }}
 			</BaseButton>
 			<Heading
 				ref="heading"
@@ -913,6 +913,13 @@ const lastProject = computed(() => {
 
 const lastProjectOrTaskProject = computed(() => lastProject.value ?? project.value)
 
+// Set when the task was opened from the admin all-tasks list (see TasksView.vue),
+// where the task's project is often one the admin isn't a member of - it never
+// loads into projectStore, so waiting on it in onBeforeRouteLeave below would
+// hang for its full 5s timeout on every exit. "Back" also has nothing sensible
+// to return to project-wise in that context, hence the dashboard link instead.
+const openedFromAdmin = computed(() => route.query.from === 'admin')
+
 // Use Shift+R on macOS (Alt+R produces special characters depending on keyboard layout)
 // Use Alt+r on other platforms
 const reminderShortcut = computed(() => isAppleDevice() ? 'Shift+KeyR' : 'Alt+KeyR')
@@ -921,7 +928,7 @@ const reminderShortcut = computed(() => isAppleDevice() ? 'Shift+KeyR' : 'Alt+Ke
 const deleteShortcut = isAppleDevice() ? 'Backspace' : 'Delete'
 
 onBeforeRouteLeave(async () => {
-	if (taskNotFound.value) {
+	if (taskNotFound.value || openedFromAdmin.value) {
 		return
 	}
 
