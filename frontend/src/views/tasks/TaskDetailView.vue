@@ -95,6 +95,21 @@
 								class="mbs-2"
 							/>
 						</div>
+						<div
+							v-if="activeFields.completedBy"
+							class="column"
+						>
+							<div class="detail-title">
+								<Icon icon="user-check" />
+								{{ $t('admin.tasks.completedByLabel') }}
+							</div>
+							<SetCompletedBy
+								:ref="e => setFieldRef('completedBy', e)"
+								:model-value="task.completedBy"
+								:task-id="task.id"
+								@update:modelValue="value => task.completedBy = value"
+							/>
+						</div>
 						<CustomTransition
 							name="flash-background"
 							appear
@@ -602,6 +617,14 @@
 							{{ $t('task.detail.actions.assign') }}
 						</XButton>
 						<XButton
+							v-if="task.done && authStore.info?.isAdmin"
+							variant="secondary"
+							icon="user-check"
+							@click="setFieldActive('completedBy')"
+						>
+							{{ $t('task.detail.actions.completedBy') }}
+						</XButton>
+						<XButton
 							v-shortcut="'KeyF'"
 							variant="secondary"
 							icon="paperclip"
@@ -786,6 +809,7 @@ import EditLabels from '@/components/tasks/partials/EditLabels.vue'
 import Heading from '@/components/tasks/partials/Heading.vue'
 import ProjectSearch from '@/components/tasks/partials/ProjectSearch.vue'
 import PercentDoneSelect from '@/components/tasks/partials/PercentDoneSelect.vue'
+import SetCompletedBy from '@/components/tasks/partials/SetCompletedBy.vue'
 import StoryPointsSelect from '@/components/tasks/partials/StoryPointsSelect.vue'
 import TaskKindSelect from '@/components/tasks/partials/TaskKindSelect.vue'
 import SprintSelect from '@/components/tasks/partials/SprintSelect.vue'
@@ -1111,6 +1135,7 @@ type FieldType =
 	| 'assignees'
 	| 'attachments'
 	| 'color'
+	| 'completedBy'
 	| 'dueDate'
 	| 'endDate'
 	| 'labels'
@@ -1130,6 +1155,7 @@ const activeFields: { [type in FieldType]: boolean } = reactive({
 	assignees: false,
 	attachments: false,
 	color: false,
+	completedBy: false,
 	dueDate: false,
 	endDate: false,
 	labels: false,
@@ -1173,6 +1199,7 @@ const activeFieldElements: { [id in FieldType]: HTMLElement | null } = reactive(
 	assignees: null,
 	attachments: null,
 	color: null,
+	completedBy: null,
 	dueDate: null,
 	endDate: null,
 	labels: null,
