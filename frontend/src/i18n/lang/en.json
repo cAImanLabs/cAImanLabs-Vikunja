@@ -1705,7 +1705,8 @@
       "reassignCompletedBy": "Reassign completion",
       "reassignTitle": "Reassign completion of {title}",
       "reassignedSuccess": "Task completion reassigned.",
-      "newCompletedByLabel": "Completed by"
+      "newCompletedByLabel": "Completed by",
+      "currentlyCompletedByPlaceholder": "Currently {username} — search to reassign…"
     }
   }
 }

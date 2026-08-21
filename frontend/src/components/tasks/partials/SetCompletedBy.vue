@@ -3,7 +3,7 @@
 		v-model="selected"
 		class="set-completed-by"
 		:loading="userSearchLoading"
-		:placeholder="$t('admin.searchUsersPlaceholder')"
+		:placeholder="placeholder"
 		:search-results="userResults"
 		label="username"
 		@search="searchUsers"
@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import {ref, watch} from 'vue'
+import {ref, computed} from 'vue'
 import {useI18n} from 'vue-i18n'
 
 import Multiselect from '@/components/input/Multiselect.vue'
@@ -47,10 +47,16 @@ const {t} = useI18n({useScope: 'global'})
 const adminUserService = new AdminUserService()
 const adminTaskService = new AdminTaskService()
 
+// Deliberately not seeded from props.modelValue: pre-filling the search box
+// with the current user's name looks like a completed search that found
+// nothing (there's no query behind it yet), which reads as "that user
+// doesn't exist". Starting empty makes it unambiguously a fresh search field;
+// the current value is still shown via the placeholder and elsewhere on the page.
 const selected = ref<IUser | null>(null)
-watch(() => props.modelValue, value => {
-	selected.value = value
-}, {immediate: true})
+
+const placeholder = computed(() => props.modelValue
+	? t('admin.tasks.currentlyCompletedByPlaceholder', {username: props.modelValue.username})
+	: t('admin.searchUsersPlaceholder'))
 
 const userResults = ref<IAdminUser[]>([])
 const userSearchLoading = ref(false)
